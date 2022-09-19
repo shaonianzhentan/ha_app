@@ -1,0 +1,14 @@
+{
+    "domain": "ha_app",
+    "name": "\u5BB6\u5EAD\u52A9\u7406",
+    "version": "2022.9.19",
+    "config_flow": true,
+    "documentation": "https://github.com/shaonianzhentan/ha_app",
+    "requirements": [
+        "paho-mqtt>=1.6.1",
+        "pyDes>=2.0.1"
+    ],
+    "dependencies": [],
+    "codeowners": ["@shaonianzhentan"],
+    "iot_class": "cloud_push"
+}

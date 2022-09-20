@@ -29,7 +29,7 @@ class SimpleConfigFlow(ConfigFlow, domain=DOMAIN):
         topic = hashlib.md5(str(uuid.uuid1()).encode('utf-8')).hexdigest()
 
         # 生成密钥二维码
-        self.hass.services.call('persistent_notification', 'create', {
+        await self.hass.services.async_call('persistent_notification', 'create', {
                     'title': '使用【家庭助理Android应用】扫码关联',
                     'message': f'[qrcode](https://cdn.dotmaui.com/qrc/?t={key}%23{topic})'
                 })

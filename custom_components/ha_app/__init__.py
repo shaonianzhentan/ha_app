@@ -100,17 +100,23 @@ class HaApp():
 
             # 消息类型
             msg_type = data['type']
+            msg_data = data['data']
+            dev_id = msg_data['dev_id']
 
             if msg_type == 'conversation':
                 # 调用语音小助手API
-                self.hass.loop.create_task(self.async_process(data['text'], conversation_id=msg_id))
+                self.hass.loop.create_task(self.async_process(msg_data['text'], conversation_id=msg_id))
             elif msg_type == 'gps':
                 # 设置坐标位置
-                latitude = data['latitude']
-                longitude = data['longitude']
                 self.hass.services.call('device_tracker', 'see', {
-                    'dev_id': data['dev_id'],
-                    'gps': [latitude, longitude]
+                    'dev_id': dev_id,
+                    'gps': [msg_data['latitude'], msg_data['longitude']]
+                })
+            elif msg_type == 'qrcode':
+                # 扫码成功
+                self.hass.services.call('persistent_notification', 'create', {
+                    'title': '家庭助理Android应用',
+                    'message': f"【{dev_id}】扫码成功"
                 })
 
         except Exception as ex:

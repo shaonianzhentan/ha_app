@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 import voluptuous as vol
 import hashlib, uuid
+import urllib.parse
 
 from homeassistant.config_entries import ConfigFlow
 from homeassistant.data_entry_flow import FlowResult
@@ -29,9 +30,10 @@ class SimpleConfigFlow(ConfigFlow, domain=DOMAIN):
         topic = hashlib.md5(str(uuid.uuid1()).encode('utf-8')).hexdigest()
 
         # 生成密钥二维码
+        qrc = urllib.parse.quote(f'ha:{key}#{topic}')
         await self.hass.services.async_call('persistent_notification', 'create', {
                     'title': '使用【家庭助理Android应用】扫码关联',
-                    'message': f'[qrcode](https://cdn.dotmaui.com/qrc/?t={key}%23{topic})'
+                    'message': f'[![qrcode](https://cdn.dotmaui.com/qrc/?t={qrc})](https://github.com/shaonianzhentan/ha_app) 内含密钥和订阅主题，请勿截图分享'
                 })
 
         return self.async_create_entry(title=DOMAIN, data={

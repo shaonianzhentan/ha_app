@@ -20,11 +20,19 @@ _LOGGER = logging.getLogger(__name__)
 CONFIG_SCHEMA = cv.deprecated(DOMAIN)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    await hass.async_add_executor_job(
+    app = await hass.async_add_executor_job(
         HaApp,
         hass,
         entry.data
     )
+
+    async def handle_service(service) -> None:
+        app.publish({
+            'type': 'notify',
+            'data': service.data
+        })
+
+    hass.services.async_register(DOMAIN, 'notify', handle_service)
     return True
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -70,9 +78,9 @@ class HaApp():
     # 清理缓存消息
     def clear_cache_msg(self):
         now = int(time.time())
-        for key in self.msg_cache:
+        for key in list(self.msg_cache.keys()):
             # 缓存消息超过10秒
-            if now - 10 > self.msg_cache[key]:
+            if key in self.msg_cache and now - 10 > self.msg_cache[key]:
                 del self.msg_cache[key]
 
     def on_message(self, client, userdata, msg):
@@ -101,7 +109,8 @@ class HaApp():
             # 消息类型
             msg_type = data['type']
             msg_data = data['data']
-            dev_id = msg_data['dev_id']
+            dev_id = data['dev_id']
+            print(msg_type)
 
             if msg_type == 'conversation':
                 # 调用语音小助手API
@@ -110,7 +119,8 @@ class HaApp():
                 # 设置坐标位置
                 self.hass.services.call('device_tracker', 'see', {
                     'dev_id': dev_id,
-                    'gps': [msg_data['latitude'], msg_data['longitude']]
+                    'gps': [msg_data['latitude'], msg_data['longitude']],
+                    'battery': msg_data['battery']
                 })
             elif msg_type == 'qrcode':
                 # 扫码成功

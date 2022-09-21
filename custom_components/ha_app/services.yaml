@@ -1,0 +1,23 @@
+notify:
+  name: Notify
+  description: 推送消息到Android手机
+  fields:
+    title:
+      name: Title
+      description: 消息标题
+      example: Home Assistant
+      selector:
+        text:
+    message:
+      name: Message
+      description: 消息内容
+      example: 这是一条推送消息
+      required: true
+      selector:
+        text:
+    url:
+      name: URL
+      description: 点击通知消息后打开的链接
+      example: https://ha.jiluxinqing.com
+      selector:
+        text:

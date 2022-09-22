@@ -166,5 +166,9 @@ class HaApp():
             self.client.loop_start()
 
         # 加密消息
+        data.update({
+            'id': uuid.uuid1().hex,
+            'time': int(time.time())
+        })
         payload = self.encryptor.Encrypt(json.dumps(data))
         self.client.publish(self.push_topic, payload, qos=0)

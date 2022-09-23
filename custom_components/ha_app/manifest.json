@@ -1,6 +1,6 @@
 {
     "domain": "ha_app",
-    "name": "\u5BB6\u5EAD\u52A9\u7406Android",
+    "name": "\u5BB6\u5EAD\u52A9\u7406Android\u5E94\u7528",
     "version": "2022.9.22",
     "config_flow": true,
     "documentation": "https://github.com/shaonianzhentan/ha_app",

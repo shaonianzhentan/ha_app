@@ -21,3 +21,9 @@ notify:
       example: https://ha.jiluxinqing.com
       selector:
         text:
+    action:
+      name: Action
+      description: 点击通知ACTION按钮，执行自定义服务
+      example: '{ "service": "persistent_notification.create", "data": { "title": "家庭助理Android应用", "message": "点击了通知按钮" } }'
+      selector:
+        object:

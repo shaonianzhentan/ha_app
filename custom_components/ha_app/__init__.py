@@ -1,6 +1,7 @@
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import CoreState, HomeAssistant, Context
 import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.network import get_url
 
 from homeassistant.const import (
     EVENT_HOMEASSISTANT_STARTED,
@@ -27,9 +28,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     async def handle_service(service) -> None:
+        data = service.data
+        # 执行服务
+        action = data.get('action')
+        if action is not None:
+            action = json.dumps(action)
+
+        # HA链接
+        url = data.get('url', get_url(hass, prefer_external=True))
+
         app.publish({
             'type': 'notify',
-            'data': service.data
+            'data': {
+                'title': data.get('title'),
+                'message': data.get('message'),
+                'url': url,
+                'action': action
+            }
         })
 
     hass.services.async_register(DOMAIN, 'notify', handle_service)
@@ -128,6 +143,12 @@ class HaApp():
                     'title': '家庭助理Android应用',
                     'message': f"【{dev_id}】扫码成功"
                 })
+            elif msg_type == 'action':
+                # 执行服务
+                action_data = json.loads(msg_data)
+                arr = action_data['service'].split('.')
+                service_data = action_data.get('data', {})
+                self.hass.services.call(arr[0], arr[1], service_data)
 
         except Exception as ex:
             print(ex)

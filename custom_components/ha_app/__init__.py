@@ -3,6 +3,7 @@ from homeassistant.core import CoreState, HomeAssistant, Context
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.network import get_url
 
+import urllib.parse
 from homeassistant.const import (
     EVENT_HOMEASSISTANT_STARTED,
     EVENT_STATE_CHANGED,
@@ -48,6 +49,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         })
 
     hass.services.async_register(DOMAIN, 'notify', handle_service)
+
+    # 显示二维码
+    async def qrcode_service(service):
+        key = entry.data['key']
+        topic = entry.data['topic']
+        qrc = urllib.parse.quote(f'ha:{key}#{topic}')
+        await hass.services.async_call('persistent_notification', 'create', {
+                    'title': '使用【家庭助理Android应用】扫码关联',
+                    'message': f'[![qrcode](https://cdn.dotmaui.com/qrc/?t={qrc})](https://github.com/shaonianzhentan/ha_app) 内含密钥和订阅主题，请勿截图分享'
+                })
+
+    hass.services.async_register(DOMAIN, 'qrcode', qrcode_service)
     return True
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

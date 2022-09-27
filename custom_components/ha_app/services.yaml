@@ -27,3 +27,6 @@ notify:
       example: '{ "service": "persistent_notification.create", "data": { "title": "家庭助理Android应用", "message": "点击了通知按钮" } }'
       selector:
         object:
+qrcode:
+  name: QRCode
+  description: 显示关联二维码

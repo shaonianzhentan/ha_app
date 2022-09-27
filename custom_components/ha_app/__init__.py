@@ -77,7 +77,8 @@ class HaApp():
     def connect(self, event=None):
         HOST = 'broker-cn.emqx.io'
         PORT = 1883
-        client = mqtt.Client()
+        client_id = self.encryptor.md5(self.subscribe_topic)
+        client = mqtt.Client(client_id=client_id, clean_session=False)
         self.client = client
         client.on_connect = self.on_connect
         client.on_message = self.on_message
@@ -192,4 +193,4 @@ class HaApp():
             'time': int(time.time())
         })
         payload = self.encryptor.Encrypt(json.dumps(data))
-        self.client.publish(self.push_topic, payload, qos=1)
+        self.client.publish(self.push_topic, payload, qos=2)

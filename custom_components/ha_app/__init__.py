@@ -40,7 +40,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         app.publish({
             'type': 'notify',
             'data': {
-                'title': data.get('title'),
+                'title': data.get('title', 'Home Assistant'),
                 'message': data.get('message'),
                 'url': url,
                 'action': action
@@ -192,4 +192,4 @@ class HaApp():
             'time': int(time.time())
         })
         payload = self.encryptor.Encrypt(json.dumps(data))
-        self.client.publish(self.push_topic, payload, qos=0)
+        self.client.publish(self.push_topic, payload, qos=1)

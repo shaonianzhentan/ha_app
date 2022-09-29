@@ -175,7 +175,7 @@ class HaApp():
                     self.publish(self.notify_msg[key])
             elif msg_type == 'notify':
                 # 通知已读
-                print('消息已送达')
+                print(f'消息已送达：{notify_id}')
                 notify_id = msg_data
                 if notify_id in self.notify_msg:
                     del self.notify_msg[notify_id]

@@ -30,23 +30,26 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def handle_service(service) -> None:
         data = service.data
+        publish_data = {
+            'message': data.get('message'),
+            'url': data.get('url', get_url(hass, prefer_external=True))
+        }
+
+        # 标题
+        title = data.get('title')
+        if title is not None:
+            publish_data['title'] = title
+
         # 执行服务
         action = data.get('action')
         if action is not None:
-            action = json.dumps(action)
+            publish_data['action'] = json.dumps(action)
 
-        # HA链接
-        url = data.get('url', get_url(hass, prefer_external=True))
-
-        app.publish({
+        result = app.publish({
             'type': 'notify',
-            'data': {
-                'title': data.get('title', 'Home Assistant'),
-                'message': data.get('message'),
-                'url': url,
-                'action': action
-            }
+            'data': publish_data
         })
+        app.notify_msg[result['id']] = result
 
     hass.services.async_register(DOMAIN, 'notify', handle_service)
 
@@ -71,6 +74,8 @@ class HaApp():
     def __init__(self, hass, config):
         self.hass = hass
         self.msg_cache = {}
+        # 通知消息
+        self.notify_msg = {}
 
         self.key = config.get('key')
         self.topic = config.get('topic')
@@ -163,6 +168,17 @@ class HaApp():
                 arr = action_data['service'].split('.')
                 service_data = action_data.get('data', {})
                 self.hass.services.call(arr[0], arr[1], service_data)
+            elif msg_type == 'online':
+                # APP连接成功
+                print('如果消息未送达，则批量发送')
+                for key in list(self.notify_msg.keys()):
+                    self.publish(self.notify_msg[key])
+            elif msg_type == 'notify':
+                # 通知已读
+                print('消息已送达')
+                notify_id = msg_data
+                if notify_id in self.notify_msg:
+                    del self.notify_msg[notify_id]
 
         except Exception as ex:
             print(ex)
@@ -201,9 +217,12 @@ class HaApp():
             self.client.loop_start()
 
         # 加密消息
-        data.update({
-            'id': uuid.uuid1().hex,
-            'time': int(time.time())
-        })
+        if 'id' not in data:
+            data.update({
+                'id': uuid.uuid1().hex,
+                'time': int(time.time())
+            })
+
         payload = self.encryptor.Encrypt(json.dumps(data))
         self.client.publish(self.push_topic, payload, qos=2)
+        return data

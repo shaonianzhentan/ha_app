@@ -1,9 +1,16 @@
 # 家庭助理Android应用
-Android手机推送通知与GPS定位
+Android手机推送通知与GPS持续定位
 
 [![hacs_badge](https://img.shields.io/badge/Home-Assistant-%23049cdb)](https://www.home-assistant.io/)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 ![visit](https://visitor-badge.laobi.icu/badge?page_id=shaonianzhentan.ha_app&left_text=visit)
+
+## 安装
+
+安装完成重启HA，刷新一下页面，在集成里搜索`家庭助理Android应用`
+
+[![Add Integration](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start?domain=ha_app)
+
 
 ## 使用说明
 

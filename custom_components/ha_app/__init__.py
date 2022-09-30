@@ -96,7 +96,7 @@ class HaApp():
         HOST = 'broker-cn.emqx.io'
         PORT = 1883
         client_id = self.encryptor.md5(self.subscribe_topic)
-        client = mqtt.Client(client_id=client_id, clean_session=False)
+        client = mqtt.Client(client_id=client_id, clean_session=True)
         self.client = client
         client.on_connect = self.on_connect
         client.on_message = self.on_message

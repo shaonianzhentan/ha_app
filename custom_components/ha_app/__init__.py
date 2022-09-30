@@ -125,16 +125,17 @@ class HaApp():
             _LOGGER.debug(data)
             self.clear_cache_msg()
 
+            msg_time = data['time']
             now = int(time.time())
             # 判断消息是否过期(5s)
-            if now - 5 > data['time']:
-                print('消息已过期')
+            if now - 5 > msg_time:
+                print(f'【{msg_time}】{msg_type}消息已过期')
                 return
 
             msg_id = data['id']
             # 判断消息是否已接收
             if msg_id in self.msg_cache:
-                print('消息已处理')
+                print(f'【{msg_time}】{msg_type}消息已处理')
                 return
 
             # 设置消息为已接收
@@ -144,7 +145,7 @@ class HaApp():
             msg_type = data['type']
             msg_data = data['data']
             dev_id = data['dev_id']
-            print(msg_type)
+            print(f'【{msg_time}】{msg_type}')
 
             if msg_type == 'conversation':
                 # 调用语音小助手API
@@ -162,6 +163,13 @@ class HaApp():
                     'title': '家庭助理Android应用',
                     'message': f"【{dev_id}】扫码成功"
                 })
+                self.publish({
+                    'type': msg_type,
+                    'data': {
+                        'internal_url': get_url(self.hass),
+                        'external_url': get_url(self.hass, prefer_external=True)
+                    }
+                })
             elif msg_type == 'action':
                 # 执行服务
                 action_data = json.loads(msg_data)
@@ -170,13 +178,14 @@ class HaApp():
                 self.hass.services.call(arr[0], arr[1], service_data)
             elif msg_type == 'online':
                 # APP连接成功
-                print('如果消息未送达，则批量发送')
-                for key in list(self.notify_msg.keys()):
+                arr = list(self.notify_msg.keys())
+                print(f'{len(arr)}条消息未送达')
+                for key in arr:
                     self.publish(self.notify_msg[key])
             elif msg_type == 'notify':
                 # 通知已读
-                print(f'消息已送达：{notify_id}')
                 notify_id = msg_data
+                print(f'消息已送达：{notify_id}')
                 if notify_id in self.notify_msg:
                     del self.notify_msg[notify_id]
 

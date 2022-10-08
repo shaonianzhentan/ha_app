@@ -2,6 +2,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import CoreState, HomeAssistant, Context
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.network import get_url
+from homeassistant.const import __version__ as current_version
 
 import urllib.parse
 from homeassistant.const import (
@@ -16,6 +17,7 @@ import paho.mqtt.client as mqtt
 import logging, json, time, uuid
 
 from .EncryptHelper import EncryptHelper
+from .manifest import manifest
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -129,13 +131,13 @@ class HaApp():
             now = int(time.time())
             # 判断消息是否过期(5s)
             if now - 5 > msg_time:
-                print(f'【{msg_time}】{msg_type}消息已过期')
+                self.log(f'【{msg_time}】{msg_type}消息已过期')
                 return
 
             msg_id = data['id']
             # 判断消息是否已接收
             if msg_id in self.msg_cache:
-                print(f'【{msg_time}】{msg_type}消息已处理')
+                self.log(f'【{msg_time}】{msg_type}消息已处理')
                 return
 
             # 设置消息为已接收
@@ -145,7 +147,7 @@ class HaApp():
             msg_type = data['type']
             msg_data = data['data']
             dev_id = data['dev_id']
-            print(f'【{msg_time}】{msg_type}')
+            self.log(f'【{msg_time}】{msg_type}')
 
             if msg_type == 'conversation':
                 # 调用语音小助手API
@@ -157,6 +159,7 @@ class HaApp():
                     'gps': [msg_data['latitude'], msg_data['longitude']],
                     'battery': msg_data['battery']
                 })
+                self.send_notify_msg()
             elif msg_type == 'qrcode':
                 # 扫码成功
                 self.hass.services.call('persistent_notification', 'create', {
@@ -167,7 +170,9 @@ class HaApp():
                     'type': msg_type,
                     'data': {
                         'internal_url': get_url(self.hass),
-                        'external_url': get_url(self.hass, prefer_external=True)
+                        'external_url': get_url(self.hass, prefer_external=True),
+                        'ha_version': current_version,
+                        'version': manifest.version
                     }
                 })
             elif msg_type == 'action':
@@ -178,16 +183,10 @@ class HaApp():
                 self.hass.services.call(arr[0], arr[1], service_data)
             elif msg_type == 'online':
                 # APP连接成功
-                arr = list(self.notify_msg.keys())
-                print(f'{len(arr)}条消息未送达')
-                for key in arr:
-                    self.publish(self.notify_msg[key])
+                self.send_notify_msg()
             elif msg_type == 'notify':
                 # 通知已读
-                notify_id = msg_data
-                print(f'消息已送达：{notify_id}')
-                if notify_id in self.notify_msg:
-                    del self.notify_msg[notify_id]
+                self.clear_notify_msg(msg_data)
 
         except Exception as ex:
             print(ex)
@@ -235,3 +234,23 @@ class HaApp():
         payload = self.encryptor.Encrypt(json.dumps(data))
         self.client.publish(self.push_topic, payload, qos=2)
         return data
+
+    # 发送通知消息
+    def send_notify_msg(self):
+        # APP连接成功
+        arr = list(self.notify_msg.keys())
+        length = len(arr)
+        if length > 0:
+            self.log(f'{length}条消息未送达')
+            for key in arr:
+                self.publish(self.notify_msg[key])
+
+    # 清除通知消息
+    def clear_notify_msg(self, notify_id):
+        self.log(f'消息已送达：{notify_id}')
+        if notify_id in self.notify_msg:
+            del self.notify_msg[notify_id]
+
+    # 日志
+    def log(self, **msg):
+        print(msg)

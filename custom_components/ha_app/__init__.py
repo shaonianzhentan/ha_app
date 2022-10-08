@@ -111,14 +111,6 @@ class HaApp():
         print('connectd')
         self.client.subscribe(self.subscribe_topic, 2)
 
-    # 清理缓存消息
-    def clear_cache_msg(self):
-        now = int(time.time())
-        for key in list(self.msg_cache.keys()):
-            # 缓存消息超过10秒
-            if key in self.msg_cache and now - 10 > self.msg_cache[key]:
-                del self.msg_cache[key]
-
     def on_message(self, client, userdata, msg):
         payload = str(msg.payload.decode('utf-8'))
         try:
@@ -187,6 +179,9 @@ class HaApp():
             elif msg_type == 'notify':
                 # 通知已读
                 self.clear_notify_msg(msg_data)
+            elif msg_type == 'log':
+                # 显示日志
+                self.log(msg_data)
 
         except Exception as ex:
             print(ex)
@@ -251,6 +246,14 @@ class HaApp():
         if notify_id in self.notify_msg:
             del self.notify_msg[notify_id]
 
+    # 清理缓存消息
+    def clear_cache_msg(self):
+        now = int(time.time())
+        for key in list(self.msg_cache.keys()):
+            # 缓存消息超过10秒
+            if key in self.msg_cache and now - 10 > self.msg_cache[key]:
+                del self.msg_cache[key]
+
     # 日志
-    def log(self, **msg):
+    def log(self, msg):
         print(msg)

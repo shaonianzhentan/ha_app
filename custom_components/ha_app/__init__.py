@@ -34,7 +34,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         data = service.data
         publish_data = {
             'message': data.get('message'),
-            'url': data.get('url', get_url(hass, prefer_external=True))
+            'url': data.get('url', get_url(hass, prefer_external=True)).strip()
         }
 
         # 标题
@@ -47,6 +47,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if action is not None:
             publish_data['action'] = json.dumps(action)
 
+        # 如果缓存消息超过20条，则全部清除        
+        if len(list(app.notify_msg.keys())) > 20:
+            app.notify_msg = {}
+
+        # 推送消息
         result = app.publish({
             'type': 'notify',
             'data': publish_data
@@ -139,7 +144,6 @@ class HaApp():
             msg_type = data['type']
             msg_data = data['data']
             dev_id = data['dev_id']
-            self.log(f'【{msg_time}】{msg_type}')
 
             if msg_type == 'conversation':
                 # 调用语音小助手API
@@ -181,7 +185,7 @@ class HaApp():
                 self.clear_notify_msg(msg_data)
             elif msg_type == 'log':
                 # 显示日志
-                self.log(msg_data)
+                _LOGGER.error(msg_data)
 
         except Exception as ex:
             print(ex)
@@ -196,7 +200,7 @@ class HaApp():
 
         if intent_result is None:
             intent_result = intent.IntentResponse()
-            intent_result.async_set_speech("Sorry, I didn't understand that")
+            intent_result.async_set_speech("对不起，我不知道你想干啥")
 
         # 推送回复消息
         plain = intent_result.speech['plain']

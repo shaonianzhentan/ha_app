@@ -31,3 +31,14 @@ Android手机推送通知与GPS持续定位
 3. 手动设置权限非常重要
 4. 打开APP扫一扫插件生成的二维码进行关联
 5. 关联成功后，自动上报GPS位置信息
+
+> **请关注微信公众号，了解更多详细使用方法**
+
+
+## 如果这个项目对你有帮助，请我喝杯<del style="font-size: 14px;">咖啡</del>奶茶吧😘
+|支付宝|微信|
+|---|---|
+<img src="https://ha.jiluxinqing.com/img/alipay.png" align="left" height="160" width="160" alt="支付宝" title="支付宝">  |  <img src="https://ha.jiluxinqing.com/img/wechat.png" align="left" height="160" width="160" alt="微信支付" title="微信">
+
+#### 关注我的微信订阅号，了解更多HomeAssistant相关知识
+<img src="https://ha.jiluxinqing.com/img/wechat-channel.png" align="left" height="160" alt="HomeAssistant家庭助理" title="HomeAssistant家庭助理"> 

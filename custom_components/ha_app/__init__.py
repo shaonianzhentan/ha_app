@@ -102,8 +102,7 @@ class HaApp():
     def connect(self, event=None):
         HOST = 'test.mosquitto.org'
         PORT = 1883
-        client_id = self.encryptor.md5(self.subscribe_topic)
-        client = mqtt.Client(client_id=client_id, clean_session=True)
+        client = mqtt.Client()
         self.client = client
         client.on_connect = self.on_connect
         client.on_message = self.on_message
@@ -113,7 +112,7 @@ class HaApp():
         client.loop_start()
 
     def on_connect(self, client, userdata, flags, rc):
-        print('connectd')
+        print('【ha_app】connectd')
         self.client.subscribe(self.subscribe_topic, 2)
 
     def on_message(self, client, userdata, msg):
@@ -211,10 +210,10 @@ class HaApp():
         })
 
     def on_subscribe(self, client, userdata, mid, granted_qos):
-        print("On Subscribed: qos = %d" % granted_qos)
+        print("【ha_app】On Subscribed: qos = %d" % granted_qos)
 
     def on_disconnect(self, client, userdata, rc):
-        print("Unexpected disconnection %s" % rc)
+        print("【ha_app】Unexpected disconnection %s" % rc)
 
     def publish(self, data):
         # 判断当前连接状态

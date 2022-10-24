@@ -24,10 +24,12 @@ _LOGGER = logging.getLogger(__name__)
 CONFIG_SCHEMA = cv.deprecated(DOMAIN)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    config = entry.data
     app = await hass.async_add_executor_job(
         HaApp,
         hass,
-        entry.data
+        config.get('key'),
+        config.get('topic')
     )
 
     async def handle_service(service) -> None:
@@ -78,14 +80,14 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 class HaApp():
 
-    def __init__(self, hass, config):
+    def __init__(self, hass, key, topic):
         self.hass = hass
         self.msg_cache = {}
         # 通知消息
         self.notify_msg = {}
 
-        self.key = config.get('key')
-        self.topic = config.get('topic')
+        self.key = key
+        self.topic = topic
 
         self.encryptor = EncryptHelper(self.key, 'ha-app')
 
@@ -112,7 +114,7 @@ class HaApp():
         client.loop_start()
 
     def on_connect(self, client, userdata, flags, rc):
-        print('【ha_app】connectd')
+        print('【ha_app】connectd', self.subscribe_topic)
         self.client.subscribe(self.subscribe_topic, 2)
 
     def on_message(self, client, userdata, msg):

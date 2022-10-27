@@ -32,6 +32,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         config.get('topic')
     )
 
+    hass.data[DOMAIN + config.get('key')] = app
+
     async def handle_service(service) -> None:
         data = service.data
         publish_data = {
@@ -76,6 +78,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    config = entry.data
+    key = DOMAIN + config.get('key')
+    hass.data[key].dispose()
+    del hass.data[key]
     return True
 
 class HaApp():
@@ -114,7 +120,7 @@ class HaApp():
         client.loop_start()
 
     def on_connect(self, client, userdata, flags, rc):
-        print("【ha_app】connectd %s" % rc)
+        print("【ha_app】connectd ", self.subscribe_topic)
         if rc == 0:
             self.client.subscribe(self.subscribe_topic, 2)
 
@@ -123,6 +129,10 @@ class HaApp():
 
     def on_subscribe(self, client, userdata, mid, granted_qos):
         print("【ha_app】On Subscribed: qos = %d" % granted_qos)
+
+    def dispose(self):
+        print("【ha_app】停止服务", self.subscribe_topic)
+        self.client.disconnect()
 
     def on_message(self, client, userdata, msg):
         payload = str(msg.payload.decode('utf-8'))

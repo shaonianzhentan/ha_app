@@ -114,8 +114,15 @@ class HaApp():
         client.loop_start()
 
     def on_connect(self, client, userdata, flags, rc):
-        print('【ha_app】connectd', self.subscribe_topic)
-        self.client.subscribe(self.subscribe_topic, 2)
+        print("【ha_app】connectd %s" % rc)
+        if rc == 0:
+            self.client.subscribe(self.subscribe_topic, 2)
+
+    def on_disconnect(self, client, userdata, rc):
+        print("【ha_app】Unexpected disconnection %s" % rc)
+
+    def on_subscribe(self, client, userdata, mid, granted_qos):
+        print("【ha_app】On Subscribed: qos = %d" % granted_qos)
 
     def on_message(self, client, userdata, msg):
         payload = str(msg.payload.decode('utf-8'))
@@ -210,12 +217,6 @@ class HaApp():
             'type': 'conversation',
             'data': plain
         })
-
-    def on_subscribe(self, client, userdata, mid, granted_qos):
-        print("【ha_app】On Subscribed: qos = %d" % granted_qos)
-
-    def on_disconnect(self, client, userdata, rc):
-        print("【ha_app】Unexpected disconnection %s" % rc)
 
     def publish(self, data):
         # 判断当前连接状态

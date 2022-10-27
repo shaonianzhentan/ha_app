@@ -80,7 +80,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     config = entry.data
     key = DOMAIN + config.get('key')
-    hass.data[key].dispose()
+    hass.data[key].unload()
     del hass.data[key]
     return True
 
@@ -130,7 +130,7 @@ class HaApp():
     def on_subscribe(self, client, userdata, mid, granted_qos):
         print("【ha_app】On Subscribed: qos = %d" % granted_qos)
 
-    def dispose(self):
+    def unload(self):
         print("【ha_app】停止服务", self.subscribe_topic)
         self.client.disconnect()
 
@@ -231,7 +231,7 @@ class HaApp():
     def publish(self, data):
         # 判断当前连接状态
         if self.client._state == 2:
-            _LOGGER.debug('断开重连')
+            print('断开重连')
             self.client.reconnect()
             self.client.loop_start()
 

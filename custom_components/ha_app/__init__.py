@@ -120,18 +120,17 @@ class HaApp():
         client.loop_start()
 
     def on_connect(self, client, userdata, flags, rc):
-        print("【ha_app】connectd ", self.subscribe_topic)
-        if rc == 0:
-            self.client.subscribe(self.subscribe_topic, 2)
+        self.log("connectd %s" % self.subscribe_topic)
+        self.client.subscribe(self.subscribe_topic, 2)
 
     def on_disconnect(self, client, userdata, rc):
-        print("【ha_app】Unexpected disconnection %s" % rc)
+        self.log("Unexpected disconnection %s" % rc)
 
     def on_subscribe(self, client, userdata, mid, granted_qos):
-        print("【ha_app】On Subscribed: qos = %d" % granted_qos)
+        self.log("On Subscribed: qos = %d" % granted_qos)
 
     def unload(self):
-        print("【ha_app】停止服务", self.subscribe_topic)
+        self.log("停止服务 %s" % self.subscribe_topic)
         self.client.disconnect()
 
     def on_message(self, client, userdata, msg):
@@ -206,7 +205,7 @@ class HaApp():
                 _LOGGER.error(msg_data)
 
         except Exception as ex:
-            print(ex)
+            self.log(ex, '出现异常')
 
     async def async_process(self, text, conversation_id):
         agent = await _get_agent(self.hass)
@@ -222,7 +221,6 @@ class HaApp():
 
         # 推送回复消息
         plain = intent_result.speech['plain']
-        _LOGGER.debug(plain)
         await self.hass.async_add_executor_job(self.publish, {
             'type': 'conversation',
             'data': plain
@@ -231,7 +229,7 @@ class HaApp():
     def publish(self, data):
         # 判断当前连接状态
         if self.client._state == 2:
-            print('断开重连')
+            self.log('断开重连')
             self.client.reconnect()
             self.client.loop_start()
 
@@ -271,5 +269,5 @@ class HaApp():
                 del self.msg_cache[key]
 
     # 日志
-    def log(self, msg):
-        print(msg)
+    def log(self, msg, title=''):
+        print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), '【ha_app】', title , msg)

@@ -125,6 +125,10 @@ class HaApp():
 
     def on_disconnect(self, client, userdata, rc):
         self.log("Unexpected disconnection %s" % rc)
+        if rc == 7:
+            self.client.disconnect()
+            self.client = None
+            self.connect()
 
     def on_subscribe(self, client, userdata, mid, granted_qos):
         self.log("On Subscribed: qos = %d" % granted_qos)

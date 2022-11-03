@@ -59,7 +59,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         })
 
         # 生成消息
-        persistent_notification(message, result)
+        hass.loop.create_task(hass.services.async_call('persistent_notification', 'create', {
+                    'title': message,
+                    'message': json.dumps(result),
+                    'notification_id': f'ha_app{result["id"]}'
+                }))
 
     hass.services.async_register(DOMAIN, 'notify', handle_service)
 
@@ -82,14 +86,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[key].unload()
     del hass.data[key]
     return True
-
-
-def persistent_notification(hass, title, result):
-    hass.loop.create_task(hass.services.async_call('persistent_notification', 'create', {
-                    'title': title,
-                    'message': json.dumps(result),
-                    'notification_id': f'ha_app{result["id"]}'
-                }))
 
 class HaApp():
 

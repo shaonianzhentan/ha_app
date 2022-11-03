@@ -36,8 +36,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def handle_service(service) -> None:
         data = service.data
+        message = data.get('message')
         publish_data = {
-            'message': data.get('message'),
+            'message': message,
             'url': data.get('url', get_url(hass, prefer_external=True)).strip()
         }
 
@@ -51,16 +52,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if action is not None:
             publish_data['action'] = json.dumps(action)
 
-        # 如果缓存消息超过20条，则全部清除        
-        if len(list(app.notify_msg.keys())) > 20:
-            app.notify_msg = {}
-
         # 推送消息
         result = app.publish({
             'type': 'notify',
             'data': publish_data
         })
-        app.notify_msg[result['id']] = result
+
+        # 生成消息
+        hass.services.call('persistent_notification', 'create', {
+                    'title': message,
+                    'message': json.dumps(result),
+                    'notification_id': f'ha_app{result["id"]}'
+                })
 
     hass.services.async_register(DOMAIN, 'notify', handle_service)
 
@@ -89,8 +92,6 @@ class HaApp():
     def __init__(self, hass, key, topic):
         self.hass = hass
         self.msg_cache = {}
-        # 通知消息
-        self.notify_msg = {}
 
         self.key = key
         self.topic = topic
@@ -127,7 +128,6 @@ class HaApp():
         self.log("Unexpected disconnection %s" % rc)
         if rc == 7:
             self.client.disconnect()
-            self.client = None
             self.connect()
 
     def on_subscribe(self, client, userdata, mid, granted_qos):
@@ -250,19 +250,18 @@ class HaApp():
 
     # 发送通知消息
     def send_notify_msg(self):
-        # APP连接成功
-        arr = list(self.notify_msg.keys())
-        length = len(arr)
-        if length > 0:
-            self.log(f'{length}条消息未送达')
-            for key in arr:
-                self.publish(self.notify_msg[key])
+        states = self.hass.states.async_all('persistent_notification')
+        for state in states:
+            if state.entity_id.startswith('persistent_notification.ha_app'):
+                message = state.attributes.get('message')
+                self.publish(json.loads(message))
 
     # 清除通知消息
     def clear_notify_msg(self, notify_id):
         self.log(f'消息已送达：{notify_id}')
-        if notify_id in self.notify_msg:
-            del self.notify_msg[notify_id]
+        self.hass.services.call('persistent_notification', 'dismiss', {
+            'notification_id': f'ha_app{notify_id}'
+        })
 
     # 清理缓存消息
     def clear_cache_msg(self):

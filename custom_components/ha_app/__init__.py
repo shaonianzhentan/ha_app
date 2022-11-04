@@ -129,9 +129,9 @@ class HaApp():
     def on_disconnect(self, client, userdata, rc):
         self.log("Unexpected disconnection %s" % rc)
         if rc == 7:
-            self.hass.services.call('homeassistant', 'reload_config_entry', {
-                'entry_id': self.entry_id
-            })
+            self.hass.loop.create_task(self.hass.services.async_call('homeassistant', 'reload_config_entry', {
+                    'entry_id': self.entry_id
+                }))
 
     def on_subscribe(self, client, userdata, mid, granted_qos):
         self.log("On Subscribed: qos = %d" % granted_qos)

@@ -29,7 +29,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         HaApp,
         hass,
         config.get('key'),
-        config.get('topic')
+        config.get('topic'),
+        entry.entry_id
     )
 
     hass.data[DOMAIN + config.get('key')] = app
@@ -89,10 +90,11 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 class HaApp():
 
-    def __init__(self, hass, key, topic):
+    def __init__(self, hass, key, topic, entry_id):
         self.hass = hass
         self.msg_cache = {}
 
+        self.entry_id = entry_id
         self.key = key
         self.topic = topic
 
@@ -127,8 +129,9 @@ class HaApp():
     def on_disconnect(self, client, userdata, rc):
         self.log("Unexpected disconnection %s" % rc)
         if rc == 7:
-            self.client.disconnect()
-            self.connect()
+            self.hass.services.call('homeassistant', 'reload_config_entry', {
+                'entry_id': self.entry_id
+            })
 
     def on_subscribe(self, client, userdata, mid, granted_qos):
         self.log("On Subscribed: qos = %d" % granted_qos)

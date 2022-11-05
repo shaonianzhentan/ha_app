@@ -149,6 +149,7 @@ class HaApp():
             self.clear_cache_msg()
 
             msg_time = data['time']
+            msg_type = data['type']
             now = int(time.time())
             # 判断消息是否过期(5s)
             if now - 5 > msg_time:
@@ -165,7 +166,6 @@ class HaApp():
             self.msg_cache[msg_id] = now
 
             # 消息类型
-            msg_type = data['type']
             msg_data = data['data']
             dev_id = data['dev_id']
 

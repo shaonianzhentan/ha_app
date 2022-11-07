@@ -202,6 +202,7 @@ class HaApp():
                 service_data = action_data.get('data', {})
                 self.hass.services.call(arr[0], arr[1], service_data)
             elif msg_type == 'online':
+                self.log(f'【{msg_time}】{msg_type}连接成功')
                 # APP连接成功
                 self.send_notify_msg()
             elif msg_type == 'notify':

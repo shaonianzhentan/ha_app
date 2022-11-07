@@ -257,7 +257,9 @@ class HaApp():
         for state in states:
             if state.entity_id.startswith('persistent_notification.ha_app'):
                 message = state.attributes.get('message')
-                self.publish(json.loads(message))
+                data = json.loads(message)
+                self.log(f'发送消息：{data["id"]}')
+                self.publish(data)
 
     # 清除通知消息
     def clear_notify_msg(self, notify_id):

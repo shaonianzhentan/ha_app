@@ -139,6 +139,7 @@ class HaApp():
     def unload(self):
         self.log("停止服务 %s" % self.subscribe_topic)
         self.client.disconnect()
+        self.client = None
 
     def on_message(self, client, userdata, msg):
         payload = str(msg.payload.decode('utf-8'))

@@ -129,9 +129,9 @@ class HaApp():
     def on_disconnect(self, client, userdata, rc):
         self.log("Unexpected disconnection %s" % rc)
         if rc == 7:
-            self.hass.services.call('homeassistant', 'reload_config_entry', {
-                'entry_id': self.entry_id
-            })
+            self.hass.loop.create_task(self.hass.services.async_call('homeassistant', 'reload_config_entry', {
+                    'entry_id': self.entry_id
+                }))
 
     def on_subscribe(self, client, userdata, mid, granted_qos):
         self.log("On Subscribed: qos = %d" % granted_qos)
@@ -149,6 +149,7 @@ class HaApp():
             self.clear_cache_msg()
 
             msg_time = data['time']
+            msg_type = data['type']
             now = int(time.time())
             # 判断消息是否过期(5s)
             if now - 5 > msg_time:
@@ -165,7 +166,6 @@ class HaApp():
             self.msg_cache[msg_id] = now
 
             # 消息类型
-            msg_type = data['type']
             msg_data = data['data']
             dev_id = data['dev_id']
 

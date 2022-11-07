@@ -237,8 +237,7 @@ class HaApp():
         # 判断当前连接状态
         if self.client._state == 2:
             self.log('断开重连')
-            self.client.reconnect()
-            self.client.loop_start()
+            self.connect()
 
         # 加密消息
         if 'id' not in data:

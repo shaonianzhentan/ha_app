@@ -135,6 +135,8 @@ class HaApp():
 
     def on_subscribe(self, client, userdata, mid, granted_qos):
         self.log("On Subscribed: qos = %d" % granted_qos)
+        # 发送通知消息
+        self.send_notify_msg()
 
     def unload(self):
         self.log("停止服务 %s" % self.subscribe_topic)

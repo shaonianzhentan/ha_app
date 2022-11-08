@@ -58,6 +58,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             'type': 'notify',
             'data': publish_data
         })
+        # 发送通知消息
+        app.send_notify_msg()
 
         # 生成消息
         hass.loop.create_task(hass.services.async_call('persistent_notification', 'create', {
@@ -124,7 +126,7 @@ class HaApp():
 
     def on_connect(self, client, userdata, flags, rc):
         self.log("connectd %s" % self.subscribe_topic)
-        self.client.subscribe(self.subscribe_topic, 2)
+        self.client.subscribe(self.subscribe_topic, 1)
 
     def on_disconnect(self, client, userdata, rc):
         self.log("Unexpected disconnection %s" % rc)
@@ -249,9 +251,9 @@ class HaApp():
                 'id': uuid.uuid1().hex,
                 'time': int(time.time())
             })
-
+        self.log(f'发送消息：{data["id"]}，主题：{self.push_topic}')
         payload = self.encryptor.Encrypt(json.dumps(data))
-        self.client.publish(self.push_topic, payload, qos=2)
+        self.client.publish(self.push_topic, payload, qos=1)
         return data
 
     # 发送通知消息
@@ -261,7 +263,6 @@ class HaApp():
             if state.entity_id.startswith('persistent_notification.ha_app'):
                 message = state.attributes.get('message')
                 data = json.loads(message)
-                self.log(f'发送消息：{data["id"]}')
                 self.publish(data)
 
     # 清除通知消息

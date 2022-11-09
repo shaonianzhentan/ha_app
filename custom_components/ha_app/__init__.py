@@ -58,8 +58,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             'type': 'notify',
             'data': publish_data
         })
-        # 发送通知消息
-        app.send_notify_msg()
 
         # 生成消息
         hass.loop.create_task(hass.services.async_call('persistent_notification', 'create', {
@@ -184,7 +182,6 @@ class HaApp():
                     'gps': [msg_data['latitude'], msg_data['longitude']],
                     'battery': msg_data['battery']
                 })
-                self.send_notify_msg()
             elif msg_type == 'qrcode':
                 # 扫码成功
                 self.hass.services.call('persistent_notification', 'create', {

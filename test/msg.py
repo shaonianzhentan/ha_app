@@ -1,9 +1,9 @@
 import paho.mqtt.client as mqtt
-
+import datetime
 
 def on_connect(client, userdata, flags, rc):
     print(rc)
-    client.subscribe('123/app')
+    client.subscribe('123/app', qos=1)
 
 def on_disconnect(client, userdata, rc):
     print(rc)
@@ -13,7 +13,7 @@ def on_subscribe(client, userdata, mid, granted_qos):
 
 def on_message(client, userdata, msg):
     payload = str(msg.payload.decode('utf-8'))
-    print(payload)
+    print(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), payload)
 
 HOST = 'test.mosquitto.org'
 PORT = 1883

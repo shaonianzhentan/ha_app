@@ -176,12 +176,18 @@ class HaApp():
                 # 调用语音小助手API
                 self.hass.loop.create_task(self.async_process(msg_data['text'], conversation_id=msg_id))
             elif msg_type == 'gps':
+                offset = msg_data.get('offset', 0)
+                if offset > 0.3:
+                    self.log(f'偏移量{offset}大于300米，阻止设置')
+                    return
+
                 # 设置坐标位置
                 self.hass.services.call('device_tracker', 'see', {
                     'dev_id': dev_id,
                     'gps': [msg_data['latitude'], msg_data['longitude']],
                     'battery': msg_data['battery']
                 })
+                self.send_notify_msg()
             elif msg_type == 'qrcode':
                 # 扫码成功
                 self.hass.services.call('persistent_notification', 'create', {

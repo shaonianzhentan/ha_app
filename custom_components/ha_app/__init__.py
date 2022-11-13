@@ -113,7 +113,7 @@ class HaApp():
     def connect(self, event=None):
         HOST = 'test.mosquitto.org'
         PORT = 1883
-        client = mqtt.Client()
+        client = mqtt.Client(client_id=self.entry_id, clean_session=False)
         self.client = client
         client.on_connect = self.on_connect
         client.on_message = self.on_message

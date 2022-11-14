@@ -45,8 +45,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         # 标题
         title = data.get('title')
-        if title is not None:
-            publish_data['title'] = title
+        publish_data['title'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()) if title is None else title
 
         # 执行服务
         action = data.get('action')
@@ -177,8 +176,8 @@ class HaApp():
                 self.hass.loop.create_task(self.async_process(msg_data['text'], conversation_id=msg_id))
             elif msg_type == 'gps':
                 offset = msg_data.get('offset', 0)
-                if offset > 0.3:
-                    self.log(f'偏移量{offset}大于300米，阻止设置')
+                if offset > 0.2:
+                    self.log(f'偏移量{offset}大于200米，阻止设置')
                     return
 
                 # 设置坐标位置

@@ -26,17 +26,4 @@ class SimpleConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is None:
             return self.async_show_form(step_id="user", data_schema=DATA_SCHEMA)
 
-        key = uuid.uuid1().hex
-        topic = hashlib.md5(str(uuid.uuid1()).encode('utf-8')).hexdigest()
-
-        # 生成密钥二维码
-        qrc = urllib.parse.quote(f'ha:{key}#{topic}')
-        await self.hass.services.async_call('persistent_notification', 'create', {
-                    'title': '使用【家庭助理Android应用】扫码关联',
-                    'message': f'[![qrcode](https://cdn.dotmaui.com/qrc/?t={qrc})](https://github.com/shaonianzhentan/ha_app) 内含密钥和订阅主题，请勿截图分享'
-                })
-
-        return self.async_create_entry(title=DOMAIN, data={
-            'key': key,
-            'topic': topic
-        })
+        return self.async_create_entry(title=DOMAIN, data={})

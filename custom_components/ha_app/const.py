@@ -1,1 +1,0 @@
-DOMAIN = "ha_app"

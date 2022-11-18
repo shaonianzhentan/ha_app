@@ -11,7 +11,7 @@ from .manifest import manifest
 from .http import HttpView
 
 _LOGGER = logging.getLogger(__name__)
-CONFIG_SCHEMA = cv.deprecated(DOMAIN)
+CONFIG_SCHEMA = cv.deprecated(manifest.domain)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     config = entry.data

@@ -8,9 +8,11 @@ import urllib.parse
 from homeassistant.config_entries import ConfigFlow
 from homeassistant.data_entry_flow import FlowResult
 
-from .const import DOMAIN
+from .manifest import manifest
 
 DATA_SCHEMA = vol.Schema({})
+
+DOMAIN = manifest.domain
 
 class SimpleConfigFlow(ConfigFlow, domain=DOMAIN):
 

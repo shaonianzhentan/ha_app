@@ -16,6 +16,19 @@ CONFIG_SCHEMA = cv.deprecated(manifest.domain)
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     config = entry.data
     hass.http.register_view(HttpView)
+
+    def handle_event(event):
+        data = event.data
+        dev_id = data.get('id')
+        states = hass.states.async_all('persistent_notification')
+        for state in states:
+            if state.entity_id.startswith(f'persistent_notification.{dev_id}'):
+                message = state.attributes.get('message')
+                result = json.loads(message)
+                result['id'] = state.entity_id.replace('persistent_notification.', '')
+                hass.bus.fire(dev_id, result)
+
+    hass.bus.listen("ha_app", handle_event)
     return True
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

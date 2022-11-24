@@ -28,7 +28,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 result['id'] = state.entity_id.replace('persistent_notification.', '')
                 hass.bus.fire(dev_id, result)
 
-    hass.bus.listen("ha_app", handle_event)
+    await hass.async_add_executor_job(hass.bus.listen, "ha_app",  handle_event)
     return True
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

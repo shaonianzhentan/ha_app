@@ -22,12 +22,15 @@ class HttpView(HomeAssistantView):
         title = body.get('title')
         message = body.get('message')
 
+        registration_info = body.get('registration_info')
+        webhook_id = registration_info.get('webhook_id')
+
         result = {
             'title': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()) if title is None else title,
             'message': message,
         }
-        dev_id = push_token
-        notification_id = f'{md5(dev_id)}{self.count}'
+        
+        notification_id = f'{md5(webhook_id)}{self.count}'
         self.count = self.count + 1
         if self.count > 50:
             self.count = 0
@@ -83,7 +86,7 @@ class HttpView(HomeAssistantView):
         hass = request.app["hass"]
         authorization = request.headers.get('Authorization')
         hass_access_token = str(authorization).replace('Bearer', '').strip()
-        print(hass_access_token)
+        # print(hass_access_token)
         token = await hass.auth.async_validate_access_token(hass_access_token)
         if token is None:
             return self.json_message("未授权", status_code=401)
@@ -106,7 +109,6 @@ class HttpView(HomeAssistantView):
 
         base_url = get_url(hass)
         url = f"{base_url}/api/webhook/{webhook_id}"
-        print(url)
         # 更新位置
         result = await self.async_http_post(hass, url, {
             "type": "update_location",
@@ -116,8 +118,6 @@ class HttpView(HomeAssistantView):
                 "battery": battery
             }
         })
-        print('======================')
-        print(result)
         if result is not None:
             # 更新电量
             battery_data = {
@@ -129,7 +129,6 @@ class HttpView(HomeAssistantView):
                 "data": [ battery_data ],
                 "type": "update_sensor_states"
             })
-            print(result)
             bl = result.get('battery_level')
             if bl is not None and 'error' in bl:
                 error = bl.get('error')

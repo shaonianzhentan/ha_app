@@ -1,6 +1,8 @@
-import time, json
+import time, json, requests
 from homeassistant.components.http import HomeAssistantView
 from .manifest import manifest
+from homeassistant.helpers.network import get_url
+from .EncryptHelper import md5, EncryptHelper
 
 class HttpView(HomeAssistantView):
 
@@ -11,6 +13,7 @@ class HttpView(HomeAssistantView):
     count = 0
 
     async def post(self, request):
+        ''' 保留通知消息 '''
         hass = request.app["hass"]
 
         body = await request.json()
@@ -34,8 +37,100 @@ class HttpView(HomeAssistantView):
                     'message': json.dumps(result),
                     'notification_id': notification_id
                 }))
-
-        result['id'] = notification_id
-        hass.bus.fire(dev_id, result)
-
         return self.json_message("推送成功", status_code=201)
+
+
+    async def put(self, request):
+        ''' 上传GPS信息 '''
+        result = await self.async_validate_access_token(request)
+        if result is None:
+            return result
+
+        # 上报GPS位置        
+        hass = request.app["hass"]
+        body = await request.json()
+        print(body)
+        hass.async_create_task(self.async_update_device(hass, body))
+
+        webhook_id = body.get('webhook_id')
+        _list = []
+        states = hass.states.async_all('persistent_notification')
+        for state in states:
+            if state.entity_id.startswith(f'persistent_notification.{webhook_id}'):
+                message = state.attributes.get('message')
+                result = json.loads(message)
+                result['id'] = state.entity_id.replace('persistent_notification.', '')
+                _list.append(result)
+        return self.json(_list)
+
+
+    async def delete(self, request):
+        ''' 清除通知 '''
+        result = await self.async_validate_access_token(request)
+        if result is None:
+            return result
+
+        hass = request.app["hass"]
+        query = request.query
+        ids = query.get('id').split(',')
+        for id in ids:
+            hass.loop.create_task(hass.services.async_call('persistent_notification', 'dismiss', {
+                    'notification_id': f'persistent_notification.{id}'
+                }))
+        return self.json_message("完成通知提醒", status_code=200)
+
+
+    async def async_validate_access_token(self, request):
+        ''' 授权验证 '''
+        hass = request.app["hass"]
+        hass_access_token = request.headers.get('Authorization', '').repalce('Bearer', '').strip()
+        print(hass_access_token)
+        token = await hass.auth.async_validate_access_token(hass_access_token)
+        if token is None:
+            return self.json_message("未授权", status_code=401)
+
+
+    async def async_update_device(self, hass, body):
+        ''' 更新设备 '''
+        webhook_id = body.get('webhook_id')
+        latitude = body.get('latitude')
+        longitude = body.get('longitude')
+        battery = body.get('battery')
+        gps_accuracy = body.get('gps_accuracy')
+
+        base_url = get_url(hass)
+        url = f"{base_url}/api/webhook/{webhook_id}"
+        # 更新位置
+        requests.post(url, {
+            "type": "update_location",
+            "data": {
+                "gps": [latitude, longitude],
+                "gps_accuracy": gps_accuracy,
+                "battery": battery
+            }
+        })
+        # 更新电量
+        battery_data = {
+            "name": "电量",
+            "unit_of_measurement": "%",
+            "state_class": "measurement",
+            "entity_category": "diagnostic",
+            "device_class": "battery",
+            "icon": "mdi:battery",
+            "state": battery,
+            "type": "sensor",
+            "unique_id": "battery_level"
+        }
+        result = requests.post(url, {
+            "data": [ battery_data ],
+            "type": "update_sensor_states"
+        })
+        bl = result.get('battery_level')
+        if bl is not None and 'error' in bl:
+            error = bl.get('error')
+            if error.get('code') == 'not_registered':
+                # 注册传感器
+                requests.post(url, {
+                    "data": battery_data,
+                    "type": "register_sensor"
+                })

@@ -52,17 +52,16 @@ class HttpView(HomeAssistantView):
         print(body)
         hass.loop.create_task(self.async_update_device(hass, body))
 
-        webhook_id = body.get('webhook_id')
         _list = []
         states = hass.states.async_all('persistent_notification')
-        for state in states:            
-            if state.entity_id.startswith(f'persistent_notification.{md5(webhook_id)}'):
+        notification_id = md5(body.get('webhook_id'))
+        for state in states:
+            if state.entity_id.startswith(f'persistent_notification.{notification_id}'):
                 message = state.attributes.get('message')
                 result = json.loads(message)
                 result['id'] = state.entity_id.replace('persistent_notification.', '')
                 _list.append(result)
         return self.json(_list)
-
 
     async def delete(self, request):
         ''' 清除通知 '''
@@ -73,12 +72,11 @@ class HttpView(HomeAssistantView):
         hass = request.app["hass"]
         query = request.query
         ids = query.get('id').split(',')
-        for id in ids:
+        for notification_id in ids:
             hass.loop.create_task(hass.services.async_call('persistent_notification', 'dismiss', {
-                    'notification_id': f'persistent_notification.{id}'
+                    'notification_id': notification_id
                 }))
-        return self.json_message("完成通知提醒", status_code=200)
-
+        return self.json_message("删除通知提醒", status_code=200)
 
     async def async_validate_access_token(self, request):
         ''' 授权验证 '''

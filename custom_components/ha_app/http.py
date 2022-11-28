@@ -1,4 +1,4 @@
-import time, json, requests
+import time, json, requests, aiohttp
 from homeassistant.components.http import HomeAssistantView
 from .manifest import manifest
 from homeassistant.helpers.network import get_url
@@ -27,7 +27,7 @@ class HttpView(HomeAssistantView):
             'message': message,
         }
         dev_id = push_token
-        notification_id = f'{dev_id}{self.count}'
+        notification_id = f'{md5(dev_id)}{self.count}'
         self.count = self.count + 1
         if self.count > 50:
             self.count = 0
@@ -43,20 +43,20 @@ class HttpView(HomeAssistantView):
     async def put(self, request):
         ''' 上传GPS信息 '''
         result = await self.async_validate_access_token(request)
-        if result is None:
+        if result is not None:
             return result
 
         # 上报GPS位置        
         hass = request.app["hass"]
         body = await request.json()
         print(body)
-        hass.async_create_task(self.async_update_device(hass, body))
+        hass.loop.create_task(self.async_update_device(hass, body))
 
         webhook_id = body.get('webhook_id')
         _list = []
         states = hass.states.async_all('persistent_notification')
-        for state in states:
-            if state.entity_id.startswith(f'persistent_notification.{webhook_id}'):
+        for state in states:            
+            if state.entity_id.startswith(f'persistent_notification.{md5(webhook_id)}'):
                 message = state.attributes.get('message')
                 result = json.loads(message)
                 result['id'] = state.entity_id.replace('persistent_notification.', '')
@@ -67,7 +67,7 @@ class HttpView(HomeAssistantView):
     async def delete(self, request):
         ''' 清除通知 '''
         result = await self.async_validate_access_token(request)
-        if result is None:
+        if result is not None:
             return result
 
         hass = request.app["hass"]
@@ -83,12 +83,20 @@ class HttpView(HomeAssistantView):
     async def async_validate_access_token(self, request):
         ''' 授权验证 '''
         hass = request.app["hass"]
-        hass_access_token = request.headers.get('Authorization', '').repalce('Bearer', '').strip()
+        authorization = request.headers.get('Authorization')
+        hass_access_token = str(authorization).replace('Bearer', '').strip()
         print(hass_access_token)
         token = await hass.auth.async_validate_access_token(hass_access_token)
         if token is None:
             return self.json_message("未授权", status_code=401)
 
+    async def async_http_post(self, hass, url, data):
+        headers = {
+            'Content-Type': 'application/json'
+        }
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, data=json.dumps(data), headers=headers) as response:
+                return await response.json()
 
     async def async_update_device(self, hass, body):
         ''' 更新设备 '''
@@ -100,8 +108,9 @@ class HttpView(HomeAssistantView):
 
         base_url = get_url(hass)
         url = f"{base_url}/api/webhook/{webhook_id}"
+        print(url)
         # 更新位置
-        requests.post(url, {
+        result = await self.async_http_post(hass, url, {
             "type": "update_location",
             "data": {
                 "gps": [latitude, longitude],
@@ -109,28 +118,34 @@ class HttpView(HomeAssistantView):
                 "battery": battery
             }
         })
-        # 更新电量
-        battery_data = {
-            "name": "电量",
-            "unit_of_measurement": "%",
-            "state_class": "measurement",
-            "entity_category": "diagnostic",
-            "device_class": "battery",
-            "icon": "mdi:battery",
-            "state": battery,
-            "type": "sensor",
-            "unique_id": "battery_level"
-        }
-        result = requests.post(url, {
-            "data": [ battery_data ],
-            "type": "update_sensor_states"
-        })
-        bl = result.get('battery_level')
-        if bl is not None and 'error' in bl:
-            error = bl.get('error')
-            if error.get('code') == 'not_registered':
-                # 注册传感器
-                requests.post(url, {
-                    "data": battery_data,
-                    "type": "register_sensor"
-                })
+        print('======================')
+        print(result)
+        if result is not None:
+            # 更新电量
+            battery_data = {
+                "state": battery,
+                "type": "sensor",
+                "unique_id": "battery_level"
+            }
+            result = await self.async_http_post(hass, url, {
+                "data": [ battery_data ],
+                "type": "update_sensor_states"
+            })
+            print(result)
+            bl = result.get('battery_level')
+            if bl is not None and 'error' in bl:
+                error = bl.get('error')
+                if error.get('code') == 'not_registered':
+                    # 注册传感器
+                    await self.async_http_post(hass, url, {
+                        "data": {
+                            "state_class": "measurement",
+                            "entity_category": "diagnostic",
+                            "device_class": "battery",
+                            "unit_of_measurement": "%",
+                            "name": "电量",
+                            "icon": "mdi:battery",
+                            **battery_data
+                        },
+                        "type": "register_sensor"
+                    })

@@ -54,6 +54,8 @@ class HttpView(HomeAssistantView):
         body = await request.json()
         print(body)
         webhook_id = body.get('webhook_id')
+        if webhook_id is None:
+            return self.json([])
 
         # 新版数据
         _type = body.get('type')
@@ -62,13 +64,13 @@ class HttpView(HomeAssistantView):
             if _type == 'gps': # 位置
                 hass.loop.create_task(self.async_update_device(hass, webhook_id, data))
             elif _type == 'notify': # 通知
-                self.fire_event(hass, 'ha_app_notify', data)
+                hass.bus.fire('ha_app_notify', data)
             elif _type == 'ringing': # 来电
-                self.fire_event(hass, 'ha_app_ringing', data)
+                hass.bus.fire('ha_app_ringing', data)
             elif _type == 'text': # 短信
-                self.fire_event(hass, 'ha_app_text', data)
+                hass.bus.fire('ha_app_text', data)
             elif _type == 'ScreenOn': # 亮屏
-                self.fire_event(hass, 'ha_app', { 'action': 'screen_on' })
+                hass.bus.fire('ha_app', { 'action': 'screen_on' })
         else:
             hass.loop.create_task(self.async_update_device(hass, webhook_id, body))
 
@@ -100,10 +102,6 @@ class HttpView(HomeAssistantView):
         ''' 调用服务 '''
         arr = service_name.split('.')
         hass.loop.create_task(hass.services.async_call(arr[0], arr[1], service_data))
-
-    def fire_event(self, hass, event_name, event_data):
-        ''' 触发事件 '''
-        hass.loop.create_task(hass.bus.async_fire(event_name, event_data))
 
     async def async_validate_access_token(self, request):
         ''' 授权验证 '''

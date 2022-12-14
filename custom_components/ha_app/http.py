@@ -29,17 +29,17 @@ class HttpView(HomeAssistantView):
             'title': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()) if title is None else title,
             'message': message,
         }
-        
+
         notification_id = f'{md5(webhook_id)}{self.count}'
         self.count = self.count + 1
         if self.count > 50:
             self.count = 0
 
-        hass.loop.create_task(hass.services.async_call('persistent_notification', 'create', {
+        self.call_service(hass, 'persistent_notification.create', {
                     'title': message,
                     'message': json.dumps(result),
                     'notification_id': notification_id
-                }))
+                })
         return self.json_message("推送成功", status_code=201)
 
 
@@ -53,11 +53,28 @@ class HttpView(HomeAssistantView):
         hass = request.app["hass"]
         body = await request.json()
         print(body)
-        hass.loop.create_task(self.async_update_device(hass, body))
+        webhook_id = body.get('webhook_id')
+
+        # 新版数据
+        _type = body.get('type')
+        if _type is not None:
+            data = body.get('data')
+            if _type == 'gps': # 位置
+                hass.loop.create_task(self.async_update_device(hass, webhook_id, data))
+            elif _type == 'notify': # 通知
+                self.fire_event(hass, 'ha_app_notify', data)
+            elif _type == 'ringing': # 来电
+                self.fire_event(hass, 'ha_app_ringing', data)
+            elif _type == 'text': # 短信
+                self.fire_event(hass, 'ha_app_text', data)
+            elif _type == 'ScreenOn': # 亮屏
+                self.fire_event(hass, 'ha_app', { 'action': 'screen_on' })
+        else:
+            hass.loop.create_task(self.async_update_device(hass, webhook_id, body))
 
         _list = []
         states = hass.states.async_all('persistent_notification')
-        notification_id = md5(body.get('webhook_id'))
+        notification_id = md5(webhook_id)
         for state in states:
             if state.entity_id.startswith(f'persistent_notification.{notification_id}'):
                 message = state.attributes.get('message')
@@ -76,10 +93,17 @@ class HttpView(HomeAssistantView):
         query = request.query
         ids = query.get('id').split(',')
         for notification_id in ids:
-            hass.loop.create_task(hass.services.async_call('persistent_notification', 'dismiss', {
-                    'notification_id': notification_id
-                }))
+            self.call_service(hass, 'persistent_notification.dismiss', { 'notification_id': notification_id })
         return self.json_message("删除通知提醒", status_code=200)
+
+    def call_service(self, hass, service_name, service_data):
+        ''' 调用服务 '''
+        arr = service_name.split('.')
+        hass.loop.create_task(hass.services.async_call(arr[0], arr[1], service_data))
+
+    def fire_event(self, hass, event_name, event_data):
+        ''' 触发事件 '''
+        hass.loop.create_task(hass.bus.async_fire(event_name, event_data))
 
     async def async_validate_access_token(self, request):
         ''' 授权验证 '''
@@ -99,9 +123,8 @@ class HttpView(HomeAssistantView):
             async with session.post(url, data=json.dumps(data), headers=headers) as response:
                 return await response.json()
 
-    async def async_update_device(self, hass, body):
+    async def async_update_device(self, hass, webhook_id, body):
         ''' 更新设备 '''
-        webhook_id = body.get('webhook_id')
         latitude = body.get('latitude')
         longitude = body.get('longitude')
         battery = body.get('battery')

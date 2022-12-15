@@ -11,7 +11,6 @@ Android手机推送通知与GPS持续定位
 
 [![Add Integration](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start?domain=ha_app)
 
-
 ## 使用说明
 
 > **Android手机权限配置**【下面是我的小米手机需要的权限】
@@ -36,6 +35,7 @@ Android手机推送通知与GPS持续定位
 
 关注后回复 `家庭助理Android应用` 下载APK文件
 
+> QQ交流群：`116304784`
 
 ## 如果这个项目对你有帮助，请我喝杯<del style="font-size: 14px;">咖啡</del>奶茶吧😘
 |支付宝|微信|

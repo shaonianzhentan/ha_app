@@ -7,7 +7,9 @@
                 "data": {}
             }
         },
-        "error": {},
+        "error": {
+            "conversation": "请先安装配置语音小助手  https://github.com/shaonianzhentan/conversation"
+        },
         "abort": {
             "single_instance_allowed": "仅允许单个配置."
         }

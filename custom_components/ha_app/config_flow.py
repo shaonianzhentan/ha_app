@@ -28,4 +28,10 @@ class SimpleConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is None:
             return self.async_show_form(step_id="user", data_schema=DATA_SCHEMA)
 
+        # 检测是否配置语音小助手
+        if self.hass.data.get('conversation_voice') is None:
+            return self.async_show_form(step_id="user", data_schema=DATA_SCHEMA, errors = {
+                'base': 'conversation'
+            })
+
         return self.async_create_entry(title=DOMAIN, data={})

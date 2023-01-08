@@ -5,6 +5,11 @@ Android手机推送通知与GPS持续定位
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 ![visit](https://visitor-badge.laobi.icu/badge?page_id=shaonianzhentan.ha_app&left_text=visit)
 
+[![badge](https://img.shields.io/badge/Conversation-语音小助手-049cdb?logo=homeassistant&style=for-the-badge)](https://github.com/shaonianzhentan/ha_wechat)
+[![badge](https://img.shields.io/badge/Windows-家庭助理-blue?logo=windows&style=for-the-badge)](https://www.microsoft.com/zh-cn/store/productId/9n2jp5z9rxx2)
+[![badge](https://img.shields.io/badge/wechat-微信控制-6cae6a?logo=wechat&style=for-the-badge)](https://github.com/shaonianzhentan/ha_wechat)
+[![badge](https://img.shields.io/badge/android-家庭助理-purple?logo=android&style=for-the-badge)](https://github.com/shaonianzhentan/ha_app)
+
 ## 安装
 
 安装完成重启HA，刷新一下页面，在集成里搜索`家庭助理Android应用`
@@ -15,21 +20,21 @@ Android手机推送通知与GPS持续定位
 
 > **Android手机权限配置**【下面是我的小米手机需要的权限】
 
-- `通知管理`权限`全部都要`
-
 - `省电策略`设置为`无限制`
 - `定位`设置为`始终允许`
 - `锁屏显示`设置为`始终允许`
 - `后台弹出界面`设置为`始终允许`
 - `常驻通知`设置为`始终允许`
 - 开启`自启动`权限
+- `通知管理`权限`全部都要`
 
-> 请严格按流程执行
-1. 下载并安装APP，安装成功后最好先别打开
-2. 进入此APP的应用信息中，设置以上所需要的权限
-3. 手动设置权限非常重要
-4. 打开APP扫一扫插件生成的二维码进行关联
-5. 关联成功后，自动上报GPS位置信息
+**推送提醒**
+
+- 请看微信公众号教程
+
+**通知转发**
+
+- 测试中
 
 > **请关注微信公众号，了解更多详细使用方法**
 

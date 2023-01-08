@@ -3,6 +3,9 @@ from homeassistant.components.http import HomeAssistantView
 from .manifest import manifest
 from homeassistant.helpers.network import get_url
 from .EncryptHelper import md5, EncryptHelper
+import logging
+
+_LOGGER = logging.getLogger(__name__)
 
 class HttpView(HomeAssistantView):
 
@@ -17,7 +20,8 @@ class HttpView(HomeAssistantView):
         hass = request.app["hass"]
 
         body = await request.json()
-        print(body)
+        _LOGGER.debug(body)
+        
         push_token = body.get('push_token')
         title = body.get('title')
         message = body.get('message')
@@ -52,7 +56,8 @@ class HttpView(HomeAssistantView):
         # 上报GPS位置        
         hass = request.app["hass"]
         body = await request.json()
-        print(body)
+        _LOGGER.debug(body)
+        
         webhook_id = body.get('webhook_id')
         if webhook_id is None:
             return self.json([])

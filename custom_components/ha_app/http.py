@@ -1,11 +1,13 @@
-import time, json, requests, aiohttp
+import time, json, aiohttp, hashlib
 from homeassistant.components.http import HomeAssistantView
 from .manifest import manifest
 from homeassistant.helpers.network import get_url
-from .EncryptHelper import md5, EncryptHelper
 import logging
 
 _LOGGER = logging.getLogger(__name__)
+
+def md5(data):
+    return hashlib.md5(data.encode('utf-8')).hexdigest()
 
 class HttpView(HomeAssistantView):
 
@@ -41,7 +43,7 @@ class HttpView(HomeAssistantView):
 
         self.call_service(hass, 'persistent_notification.create', {
                     'title': message,
-                    'message': json.dumps(result),
+                    'message': json.dumps(result, indent=2, ensure_ascii=False),
                     'notification_id': notification_id
                 })
         return self.json_message("推送成功", status_code=201)

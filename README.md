@@ -44,3 +44,8 @@ Android手机推送通知与GPS持续定位
 <img src="https://ha.jiluxinqing.com/img/wechat-channel.png" height="160" alt="HomeAssistant家庭助理" title="HomeAssistant家庭助理"> 
 
 > QQ交流群：`116304784`
+
+
+## 支持打开应用URL
+
+- dingtalk://dingtalkclient/page/link?url=https://m.tb.cn/x.V3eUq4

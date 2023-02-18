@@ -26,7 +26,7 @@ class HttpView(HomeAssistantView):
         
         push_token = body.get('push_token')
         title = body.get('title')
-        message = body.get('message')
+        message = body.get('message')            
 
         registration_info = body.get('registration_info')
         webhook_id = registration_info.get('webhook_id')
@@ -35,6 +35,18 @@ class HttpView(HomeAssistantView):
             'title': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()) if title is None else title,
             'message': message,
         }
+
+        # 附加数据
+        data = body.get('data')
+        if data is not None:
+            # 链接
+            url = data.get('url')
+            if url is not None:
+                result['url'] = url
+            # TTS
+            tts = data.get('tts')
+            if tts is not None:
+                result['tts'] = tts
 
         notification_id = f'{md5(webhook_id)}{self.count}'
         self.count = self.count + 1

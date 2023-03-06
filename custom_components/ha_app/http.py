@@ -92,6 +92,8 @@ class HttpView(HomeAssistantView):
                 hass.bus.fire('ha_app_ringing', data)
             elif _type == 'sms': # 短信
                 hass.bus.fire('ha_app_sms', data)
+            elif _type == 'clipbrd': # 剪切板
+                pass
             elif _type == 'ScreenOn': # 亮屏
                 hass.bus.fire('ha_app', { 'action': 'screen_on' })
                 battery = data.get('battery')

@@ -88,10 +88,12 @@ class HttpView(HomeAssistantView):
                 hass.loop.create_task(self.async_update_device(hass, webhook_url, data))
             elif _type == 'notify': # 通知
                 hass.bus.fire('ha_app_notify', data)
+                hass.loop.create_task(self.async_update_notify(hass, webhook_url, data))
             elif _type == 'ringing': # 来电
                 hass.bus.fire('ha_app_ringing', data)
             elif _type == 'sms': # 短信
                 hass.bus.fire('ha_app_sms', data)
+                hass.loop.create_task(self.async_update_sms(hass, webhook_url, data))
             elif _type == 'clipbrd': # 剪切板
                 pass
             elif _type == 'ScreenOn': # 亮屏
@@ -194,6 +196,72 @@ class HttpView(HomeAssistantView):
                         "name": "电量",
                         "icon": "mdi:battery",
                         **battery_data
+                    },
+                    "type": "register_sensor"
+                })
+
+    async def async_update_sms(self, hass, webhook_url, data):
+        ''' 更新短信 '''
+
+        sensor_data = {
+            "attributes": {
+                "text": data['content']
+            },
+            "state": data['from'],
+            "type": "sensor",
+            "unique_id": "short_message"
+        }
+        result = await self.async_http_post(hass, webhook_url, {
+            "data": [ sensor_data ],
+            "type": "update_sensor_states"
+        })
+        bl = result.get('short_message')
+        if bl is not None and 'error' in bl:
+            error = bl.get('error')
+            if error.get('code') == 'not_registered':
+                # 注册传感器
+                await self.async_http_post(hass, webhook_url, {
+                    "data": {
+                        "state_class": "measurement",
+                        "entity_category": "diagnostic",
+                        "unit_of_measurement": "",
+                        "name": "短信",
+                        "icon": "mdi:message",
+                        **sensor_data
+                    },
+                    "type": "register_sensor"
+                })
+
+    async def async_update_notify(self, hass, webhook_url, data):
+        ''' 更新通知 '''
+
+        sensor_data = {
+            "attributes": {
+                "title": data['title'],
+                "content": data['content'],
+                "text": data['text']
+            },
+            "state": data['package'],
+            "type": "sensor",
+            "unique_id": "application_notification"
+        }
+        result = await self.async_http_post(hass, webhook_url, {
+            "data": [ sensor_data ],
+            "type": "update_sensor_states"
+        })
+        bl = result.get('application_notification')
+        if bl is not None and 'error' in bl:
+            error = bl.get('error')
+            if error.get('code') == 'not_registered':
+                # 注册传感器
+                await self.async_http_post(hass, webhook_url, {
+                    "data": {
+                        "state_class": "measurement",
+                        "entity_category": "diagnostic",
+                        "unit_of_measurement": "",
+                        "name": "应用通知",
+                        "icon": "mdi:cellphone-message",
+                        **sensor_data
                     },
                     "type": "register_sensor"
                 })

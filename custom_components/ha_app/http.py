@@ -95,7 +95,7 @@ class HttpView(HomeAssistantView):
                 hass.bus.fire('ha_app_sms', data)
                 hass.loop.create_task(self.async_update_sms(hass, webhook_url, data))
             elif _type == 'clipbrd': # 剪切板
-                pass
+                hass.loop.create_task(self.async_update_clipbrd(hass, webhook_url, data))
             elif _type == 'ScreenOn': # 亮屏
                 hass.bus.fire('ha_app', { 'action': 'screen_on' })
                 battery = data.get('battery')
@@ -176,6 +176,7 @@ class HttpView(HomeAssistantView):
         battery_data = {
             "state": battery,
             "type": "sensor",
+            "icon": "mdi:battery",
             "unique_id": "battery_level"
         }
         result = await self.async_http_post(hass, webhook_url, {
@@ -194,7 +195,6 @@ class HttpView(HomeAssistantView):
                         "device_class": "battery",
                         "unit_of_measurement": "%",
                         "name": "电量",
-                        "icon": "mdi:battery",
                         **battery_data
                     },
                     "type": "register_sensor"
@@ -207,8 +207,9 @@ class HttpView(HomeAssistantView):
             "attributes": {
                 "text": data['content']
             },
-            "state": data['from'],
+            "state": str(data['from']),
             "type": "sensor",
+            "icon": "mdi:message",
             "unique_id": "short_message"
         }
         result = await self.async_http_post(hass, webhook_url, {
@@ -224,9 +225,7 @@ class HttpView(HomeAssistantView):
                     "data": {
                         "state_class": "measurement",
                         "entity_category": "diagnostic",
-                        "unit_of_measurement": "",
                         "name": "短信",
-                        "icon": "mdi:message",
                         **sensor_data
                     },
                     "type": "register_sensor"
@@ -237,12 +236,13 @@ class HttpView(HomeAssistantView):
 
         sensor_data = {
             "attributes": {
-                "title": data['title'],
                 "content": data['content'],
-                "text": data['text']
+                "text": data['text'],
+                "package": data['package']
             },
-            "state": data['package'],
+            "state": str(data['title']),
             "type": "sensor",
+            "icon": "mdi:cellphone-message",
             "unique_id": "application_notification"
         }
         result = await self.async_http_post(hass, webhook_url, {
@@ -258,9 +258,35 @@ class HttpView(HomeAssistantView):
                     "data": {
                         "state_class": "measurement",
                         "entity_category": "diagnostic",
-                        "unit_of_measurement": "",
-                        "name": "应用通知",
-                        "icon": "mdi:cellphone-message",
+                        "name": "通知",
+                        **sensor_data
+                    },
+                    "type": "register_sensor"
+                })
+
+    async def async_update_clipbrd(self, hass, webhook_url, data):
+        ''' 剪贴板 '''
+
+        sensor_data = {
+            "state": str(data),
+            "type": "sensor",
+            "icon": "mdi:clipboard-text",
+            "unique_id": "clip_board"
+        }
+        result = await self.async_http_post(hass, webhook_url, {
+            "data": [ sensor_data ],
+            "type": "update_sensor_states"
+        })
+        bl = result.get('clip_board')
+        if bl is not None and 'error' in bl:
+            error = bl.get('error')
+            if error.get('code') == 'not_registered':
+                # 注册传感器
+                await self.async_http_post(hass, webhook_url, {
+                    "data": {
+                        "state_class": "measurement",
+                        "entity_category": "diagnostic",
+                        "name": "剪贴板",
                         **sensor_data
                     },
                     "type": "register_sensor"

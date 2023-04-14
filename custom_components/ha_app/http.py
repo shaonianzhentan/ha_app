@@ -223,7 +223,7 @@ class HttpView(HomeAssistantView):
                 # 注册传感器
                 await self.async_http_post(hass, webhook_url, {
                     "data": {
-                        "device_class": "date",
+                        "device_class": "timestamp",
                         "entity_category": "diagnostic",
                         "name": "短信",
                         **sensor_data
@@ -257,7 +257,7 @@ class HttpView(HomeAssistantView):
                 # 注册传感器
                 await self.async_http_post(hass, webhook_url, {
                     "data": {
-                        "device_class": "date",
+                        "device_class": "timestamp",
                         "entity_category": "diagnostic",
                         "name": "通知",
                         **sensor_data
@@ -288,7 +288,7 @@ class HttpView(HomeAssistantView):
                 # 注册传感器
                 await self.async_http_post(hass, webhook_url, {
                     "data": {
-                        "device_class": "date",
+                        "device_class": "timestamp",
                         "entity_category": "diagnostic",
                         "name": "剪贴板",
                         **sensor_data
@@ -319,7 +319,7 @@ class HttpView(HomeAssistantView):
                 # 注册传感器
                 await self.async_http_post(hass, webhook_url, {
                     "data": {
-                        "device_class": "date",
+                        "device_class": "timestamp",
                         "entity_category": "diagnostic",
                         "name": "来电",
                         **sensor_data

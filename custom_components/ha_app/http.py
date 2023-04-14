@@ -2,6 +2,7 @@ import time, json, aiohttp, hashlib
 from homeassistant.components.http import HomeAssistantView
 from .manifest import manifest
 from homeassistant.helpers.network import get_url
+from datetime import datetime
 import logging
 
 _LOGGER = logging.getLogger(__name__)
@@ -87,12 +88,10 @@ class HttpView(HomeAssistantView):
             if _type == 'gps': # 位置
                 hass.loop.create_task(self.async_update_device(hass, webhook_url, data))
             elif _type == 'notify': # 通知
-                hass.bus.fire('ha_app_notify', data)
                 hass.loop.create_task(self.async_update_notify(hass, webhook_url, data))
             elif _type == 'ringing': # 来电
-                hass.bus.fire('ha_app_ringing', data)
+                hass.loop.create_task(self.async_update_ringing(hass, webhook_url, data))
             elif _type == 'sms': # 短信
-                hass.bus.fire('ha_app_sms', data)
                 hass.loop.create_task(self.async_update_sms(hass, webhook_url, data))
             elif _type == 'clipbrd': # 剪切板
                 hass.loop.create_task(self.async_update_clipbrd(hass, webhook_url, data))
@@ -205,9 +204,10 @@ class HttpView(HomeAssistantView):
 
         sensor_data = {
             "attributes": {
+                "from": str(data['from']),
                 "text": data['content']
             },
-            "state": str(data['from']),
+            "state": datetime.now().isoformat(),
             "type": "sensor",
             "icon": "mdi:message",
             "unique_id": "short_message"
@@ -236,11 +236,12 @@ class HttpView(HomeAssistantView):
 
         sensor_data = {
             "attributes": {
+                "title": data['title'],
                 "content": data['content'],
                 "text": data['text'],
                 "package": data['package']
             },
-            "state": str(data['title']),
+            "state": datetime.now().isoformat(),
             "type": "sensor",
             "icon": "mdi:cellphone-message",
             "unique_id": "application_notification"
@@ -268,7 +269,10 @@ class HttpView(HomeAssistantView):
         ''' 剪贴板 '''
 
         sensor_data = {
-            "state": str(data),
+            "attributes": {
+                "text": str(data)
+            },
+            "state": datetime.now().isoformat(),
             "type": "sensor",
             "icon": "mdi:clipboard-text",
             "unique_id": "clip_board"
@@ -287,6 +291,37 @@ class HttpView(HomeAssistantView):
                         "state_class": "measurement",
                         "entity_category": "diagnostic",
                         "name": "剪贴板",
+                        **sensor_data
+                    },
+                    "type": "register_sensor"
+                })
+
+    async def async_update_ringing(self, hass, webhook_url, data):
+        ''' 来电响铃 '''
+
+        sensor_data = {
+            "attributes": {
+                "number": str(data)
+            },
+            "state": datetime.now().isoformat(),
+            "type": "sensor",
+            "icon": "mdi:clipboard-text",
+            "unique_id": "ringing"
+        }
+        result = await self.async_http_post(hass, webhook_url, {
+            "data": [ sensor_data ],
+            "type": "update_sensor_states"
+        })
+        bl = result.get('ringing')
+        if bl is not None and 'error' in bl:
+            error = bl.get('error')
+            if error.get('code') == 'not_registered':
+                # 注册传感器
+                await self.async_http_post(hass, webhook_url, {
+                    "data": {
+                        "state_class": "measurement",
+                        "entity_category": "diagnostic",
+                        "name": "来电",
                         **sensor_data
                     },
                     "type": "register_sensor"

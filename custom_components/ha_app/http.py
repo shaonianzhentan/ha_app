@@ -175,7 +175,6 @@ class HttpView(HomeAssistantView):
         battery_data = {
             "state": battery,
             "type": "sensor",
-            "icon": "mdi:battery",
             "unique_id": "battery_level"
         }
         result = await self.async_http_post(hass, webhook_url, {
@@ -194,6 +193,7 @@ class HttpView(HomeAssistantView):
                         "device_class": "battery",
                         "unit_of_measurement": "%",
                         "name": "电量",
+                        "icon": "mdi:battery",
                         **battery_data
                     },
                     "type": "register_sensor"
@@ -305,7 +305,7 @@ class HttpView(HomeAssistantView):
             },
             "state": datetime.now().isoformat(),
             "type": "sensor",
-            "icon": "mdi:clipboard-text",
+            "icon": "mdi:phone-incoming",
             "unique_id": "ringing"
         }
         result = await self.async_http_post(hass, webhook_url, {

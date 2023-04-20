@@ -1,7 +1,7 @@
 {
     "domain": "ha_app",
     "name": "\u5BB6\u5EAD\u52A9\u7406Android\u5E94\u7528",
-    "version": "2023.4.19",
+    "version": "2023.4.20",
     "config_flow": true,
     "documentation": "https://github.com/shaonianzhentan/ha_app",
     "requirements": [],

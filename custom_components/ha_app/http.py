@@ -20,16 +20,13 @@ class HttpView(HomeAssistantView):
 
     timezone = None
 
-    [property]
+    @property
     def now(self):
-        return datetime.now().isoformat(self.timezone)
+        return datetime.now(self.timezone).isoformat()
 
     async def post(self, request):
         ''' 保留通知消息 '''
         hass = request.app["hass"]
-
-        # 设置时区
-        self.timezone = pytz.timezone(hass.config.time_zone)
 
         body = await request.json()
         _LOGGER.debug(body)
@@ -81,6 +78,9 @@ class HttpView(HomeAssistantView):
         hass = request.app["hass"]
         body = await request.json()
         _LOGGER.debug(body)
+
+        # 设置时区
+        self.timezone = pytz.timezone(hass.config.time_zone)
         
         webhook_id = body.get('webhook_id')
         if webhook_id is None:
@@ -184,6 +184,7 @@ class HttpView(HomeAssistantView):
         battery_data = {
             "state": battery,
             "type": "sensor",
+            "icon": "mdi:battery",
             "unique_id": "battery_level"
         }
         result = await self.async_http_post(hass, webhook_url, {
@@ -202,7 +203,6 @@ class HttpView(HomeAssistantView):
                         "device_class": "battery",
                         "unit_of_measurement": "%",
                         "name": "电量",
-                        "icon": "mdi:battery",
                         **battery_data
                     },
                     "type": "register_sensor"

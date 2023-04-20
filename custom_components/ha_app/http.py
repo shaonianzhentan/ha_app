@@ -3,7 +3,7 @@ from homeassistant.components.http import HomeAssistantView
 from .manifest import manifest
 from homeassistant.helpers.network import get_url
 from datetime import datetime
-import logging
+import logging, pytz
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,9 +18,18 @@ class HttpView(HomeAssistantView):
     # 计数器
     count = 0
 
+    timezone = None
+
+    [property]
+    def now(self):
+        return datetime.now().isoformat(self.timezone)
+
     async def post(self, request):
         ''' 保留通知消息 '''
         hass = request.app["hass"]
+
+        # 设置时区
+        self.timezone = pytz.timezone(hass.config.time_zone)
 
         body = await request.json()
         _LOGGER.debug(body)
@@ -207,7 +216,7 @@ class HttpView(HomeAssistantView):
                 "from": str(data['from']),
                 "text": data['content']
             },
-            "state": datetime.now().isoformat(),
+            "state": self.now,
             "type": "sensor",
             "icon": "mdi:message",
             "unique_id": "short_message"
@@ -241,7 +250,7 @@ class HttpView(HomeAssistantView):
                 "text": data['text'],
                 "package": data['package']
             },
-            "state": datetime.now().isoformat(),
+            "state": self.now,
             "type": "sensor",
             "icon": "mdi:cellphone-message",
             "unique_id": "application_notification"
@@ -272,7 +281,7 @@ class HttpView(HomeAssistantView):
             "attributes": {
                 "text": str(data)
             },
-            "state": datetime.now().isoformat(),
+            "state": self.now,
             "type": "sensor",
             "icon": "mdi:clipboard-text",
             "unique_id": "clip_board"
@@ -303,7 +312,7 @@ class HttpView(HomeAssistantView):
             "attributes": {
                 "number": str(data)
             },
-            "state": datetime.now().isoformat(),
+            "state": self.now,
             "type": "sensor",
             "icon": "mdi:phone-incoming",
             "unique_id": "ringing"

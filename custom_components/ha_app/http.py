@@ -94,9 +94,14 @@ class HttpView(HomeAssistantView):
         _type = body.get('type')
         if _type is not None:
             data = body.get('data')
+
+            # 发送事件
+            if ['notify', 'sms'].count(_type) > 0:
+                hass.bus.fire('ha_app', { 'action': _type, 'data': data })
+
             if _type == 'gps': # 位置
                 hass.loop.create_task(self.async_update_device(hass, webhook_url, data))
-            elif _type == 'notify': # 通知
+            elif _type == 'notify': # 通知                
                 hass.loop.create_task(self.async_update_notify(hass, webhook_url, data))
             elif _type == 'ringing': # 来电
                 hass.loop.create_task(self.async_update_ringing(hass, webhook_url, data))
@@ -105,7 +110,6 @@ class HttpView(HomeAssistantView):
             elif _type == 'clipbrd': # 剪切板
                 hass.loop.create_task(self.async_update_clipbrd(hass, webhook_url, data))
             elif _type == 'ScreenOn': # 亮屏
-                hass.bus.fire('ha_app', { 'action': 'screen_on' })
                 battery = data.get('battery')
                 if battery is not None:
                     hass.loop.create_task(self.async_update_battery(hass, webhook_url, battery))

@@ -1,0 +1,36 @@
+blueprint:
+  name: APP应用通知消息
+  description: 处理APP应用的消息转发
+  domain: automation
+  source_url: https://github.com/shaonianzhentan/ha_app
+  input:
+    package:
+      name: 应用包
+      description: 应用标识
+      selector:
+        select:
+          options:
+            - label: 米家
+              value: com.xiaomi.smarthome
+            - label: 短信
+              value: sms
+            custom_value: true
+    com_xiaomi_smarthome:
+      name: 米家
+      description: 米家APP通知消息
+      default: []
+      selector:
+        action: {}
+trigger:
+- platform: event
+  event_type: ha_app
+  event_data:
+    action: notify
+    package: !input package
+action:
+- variables:
+    package: !input package
+- choose:
+  - conditions:
+    - '{{ package == "com.xiaomi.smarthome" }}'
+    sequence: !input com_xiaomi_smarthome

@@ -97,7 +97,7 @@ class HttpView(HomeAssistantView):
 
             # 发送事件
             if ['notify', 'sms'].count(_type) > 0:
-                hass.bus.fire('ha_app', { 'action': _type, 'data': data })
+                hass.bus.fire('ha_app', { 'type': _type, 'data': data })
 
             if _type == 'gps': # 位置
                 hass.loop.create_task(self.async_update_device(hass, webhook_url, data))

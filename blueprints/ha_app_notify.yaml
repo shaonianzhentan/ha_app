@@ -25,8 +25,9 @@ trigger:
 - platform: event
   event_type: ha_app
   event_data:
-    action: notify
-    package: !input package
+    type: notify
+    data:
+      package: !input package
 action:
 - variables:
     package: !input package

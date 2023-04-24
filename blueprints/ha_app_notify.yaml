@@ -2,7 +2,7 @@ blueprint:
   name: APP应用通知消息
   description: 处理APP应用的消息转发
   domain: automation
-  source_url: https://github.com/shaonianzhentan/ha_app
+  source_url: https://github.com/shaonianzhentan/ha_app/blob/main/blueprints/ha_app_notify.yaml
   input:
     package:
       name: 应用包

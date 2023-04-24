@@ -12,12 +12,41 @@ blueprint:
           options:
             - label: 米家
               value: com.xiaomi.smarthome
-            - label: 短信
-              value: sms
-            custom_value: true
+            - label: 微信
+              value: com.tencent.mm
+            - label: QQ
+              value: com.tencent.mobileqq
+            - label: 易微联
+              value: com.coolkit
+            - label: 比亚迪
+              value: com.byd.aeri.caranywhere
     com_xiaomi_smarthome:
       name: 米家
-      description: 米家APP通知消息
+      description: 米家通知消息
+      default: []
+      selector:
+        action: {}
+    com_tencent_mm:
+      name: 微信
+      description: 微信通知消息
+      default: []
+      selector:
+        action: {}
+    com_tencent_mobileqq:
+      name: QQ
+      description: QQ通知消息
+      default: []
+      selector:
+        action: {}
+    com_coolkit:
+      name: 易微联
+      description: eWeLink通知消息
+      default: []
+      selector:
+        action: {}
+    com_byd_aeri_caranywhere:
+      name: 比亚迪
+      description: 比亚迪通知消息
       default: []
       selector:
         action: {}
@@ -35,3 +64,15 @@ action:
   - conditions:
     - '{{ package == "com.xiaomi.smarthome" }}'
     sequence: !input com_xiaomi_smarthome
+  - conditions:
+    - '{{ package == "com.tencent.mm" }}'
+    sequence: !input com_tencent_mm
+  - conditions:
+    - '{{ package == "com.tencent.mobileqq" }}'
+    sequence: !input com_tencent_mobileqq
+  - conditions:
+    - '{{ package == "com.coolkit" }}'
+    sequence: !input com_coolkit
+  - conditions:
+    - '{{ package == "com.byd.aeri.caranywhere" }}'
+    sequence: !input com_byd_aeri_caranywhere

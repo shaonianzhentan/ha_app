@@ -184,13 +184,35 @@ class HttpView(HomeAssistantView):
 
     async def async_update_battery(self, hass, webhook_url, battery):
         ''' 更新电量 '''
+        battery = int(battery)
+        icon = "mdi:battery"
+
+        if battery <= 90:
+            icon = "mdi:battery-90"
+        elif battery <= 80:
+            icon = "mdi:battery-80"
+        elif battery <= 70:
+            icon = "mdi:battery-70"
+        elif battery <= 60:
+            icon = "mdi:battery-60"
+        elif battery <= 50:
+            icon = "mdi:battery-50"
+        elif battery <= 40:
+            icon = "mdi:battery-40"
+        elif battery <= 30:
+            icon = "mdi:battery-30"
+        elif battery <= 20:
+            icon = "mdi:battery-20"
+        elif battery <= 10:
+            icon = "mdi:battery-10"
 
         battery_data = {
             "state": battery,
             "type": "sensor",
-            "icon": "mdi:battery",
+            "icon": icon,
             "unique_id": "battery_level"
         }
+
         result = await self.async_http_post(hass, webhook_url, {
             "data": [ battery_data ],
             "type": "update_sensor_states"

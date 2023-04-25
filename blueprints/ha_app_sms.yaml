@@ -1,0 +1,43 @@
+blueprint:
+  name: APP应用短信通知
+  description: 处理APP应用的短信
+  domain: automation
+  source_url: https://github.com/shaonianzhentan/ha_app/blob/main/blueprints/ha_app_sms.yaml
+  input:
+    express:
+      name: 快递消息
+      description: 快递收件码短信消息
+      default: []
+      selector:
+        action: {}
+    captcha:
+      name: 验证码
+      description: 验证码短信消息
+      default: []
+      selector:
+        action: {}
+    wechat_payment:
+      name: 微信支付
+      description: 微信支付短信消息
+      default: []
+      selector:
+        action: {}
+trigger:
+- platform: event
+  event_type: ha_app
+  event_data:
+    type: sms
+action:
+- variables:
+    content: '{{ trigger.event.data.data.content }}'
+- choose:
+  - conditions:
+    - '{{ "菜鸟驿站" in content }}'
+    - '{{ "兔喜生活" in content }}'
+    sequence: !input express
+  - conditions:
+    - '{{ "验证码" in content }}'
+    sequence: !input captcha
+  - conditions:
+    - '{{ "微信支付" in content }}'
+    sequence: !input wechat_payment

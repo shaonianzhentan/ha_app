@@ -4,12 +4,6 @@ blueprint:
   domain: automation
   source_url: https://github.com/shaonianzhentan/ha_app/blob/main/blueprints/ha_app_notify.yaml
   input:
-    default_notify:
-      name: 全部消息
-      description: 默认获取全部接收到的短信通知消息
-      default: []
-      selector:
-        action: {}
     com_xiaomi_smarthome:
       name: 米家
       description: com.xiaomi.smarthome
@@ -24,7 +18,7 @@ blueprint:
         action: {}
     com_tencent_mobileqq:
       name: QQ
-      description: com.tencent.mm
+      description: com.tencent.mobileqq
       default: []
       selector:
         action: {}
@@ -64,4 +58,3 @@ action:
   - conditions:
     - '{{ package == "com.byd.aeri.caranywhere" }}'
     sequence: !input com_byd_aeri_caranywhere
-- sequence: !input default_notify

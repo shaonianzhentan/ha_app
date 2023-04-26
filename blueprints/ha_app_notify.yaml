@@ -1,9 +1,15 @@
 blueprint:
   name: APP应用通知消息
-  description: 处理APP应用的消息转发
+  description: "模板内包含变量  标题：{{title}}  内容：{{content}}  短文本：{{text}}  应用包：{{package}}"
   domain: automation
   source_url: https://github.com/shaonianzhentan/ha_app/blob/main/blueprints/ha_app_notify.yaml
   input:
+    other:
+      name: 其它应用
+      description: 没有匹配到应用时，执行此服务
+      default: []
+      selector:
+        action: {}
     com_xiaomi_smarthome:
       name: 米家
       description: com.xiaomi.smarthome
@@ -42,6 +48,9 @@ trigger:
 action:
 - variables:
     package: '{{ trigger.event.data.data.package }}'
+    title: '{{ trigger.event.data.data.title }}'
+    content: '{{ trigger.event.data.data.content }}'
+    text: '{{ trigger.event.data.data.text }}'
 - choose:
   - conditions:
     - '{{ package == "com.xiaomi.smarthome" }}'
@@ -58,3 +67,6 @@ action:
   - conditions:
     - '{{ package == "com.byd.aeri.caranywhere" }}'
     sequence: !input com_byd_aeri_caranywhere
+  - conditions:
+    - '{{ package != "" }}'
+    sequence: !input other

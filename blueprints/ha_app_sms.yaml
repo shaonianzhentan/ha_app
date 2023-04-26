@@ -1,9 +1,15 @@
 blueprint:
   name: APP应用短信通知
-  description: 处理APP应用的短信
+  description: "模板内包含变量  短信消息：{{text}}，发送号码：{{from}}"
   domain: automation
   source_url: https://github.com/shaonianzhentan/ha_app/blob/main/blueprints/ha_app_sms.yaml
   input:
+    other:
+      name: 其它消息
+      description: 没有匹配到定义消息时，执行此服务
+      default: []
+      selector:
+        action: {}
     express:
       name: 快递消息
       description: 快递收件码短信消息
@@ -29,15 +35,19 @@ trigger:
     type: sms
 action:
 - variables:
-    content: '{{ trigger.event.data.data.content }}'
+    text: '{{ trigger.event.data.data.content }}'
+    from: '{{ trigger.event.data.data.from }}'
 - choose:
   - conditions:
-    - '{{ "菜鸟驿站" in content }}'
-    - '{{ "兔喜生活" in content }}'
+    - '{{ "菜鸟驿站" in text }}'
+    - '{{ "兔喜生活" in text }}'
     sequence: !input express
   - conditions:
-    - '{{ "验证码" in content }}'
+    - '{{ "验证码" in text }}'
     sequence: !input captcha
   - conditions:
-    - '{{ "微信支付" in content }}'
+    - '{{ "微信支付" in text }}'
     sequence: !input wechat_payment
+  - conditions:
+    - '{{ text != "" }}'
+    sequence: !input other

@@ -1,0 +1,60 @@
+blueprint:
+  name: APP应用按钮点击
+  description: "点击通知栏的按钮自定义服务，上👆下👇左👈右👉OK👌"
+  domain: automation
+  source_url: https://github.com/shaonianzhentan/ha_app/blob/main/blueprints/ha_app_sms.yaml
+  input:
+    up:
+      name: 👆
+      description: 上
+      default: []
+      selector:
+        action: {}
+    down:
+      name: 👇
+      description: 下
+      default: []
+      selector:
+        action: {}
+    left:
+      name: 👈
+      description: 左
+      default: []
+      selector:
+        action: {}
+    right:
+      name: 👉
+      description: 右
+      default: []
+      selector:
+        action: {}
+    ok:
+      name: 👌
+      description: OK
+      default: []
+      selector:
+        action: {}
+trigger:
+- platform: event
+  event_type: ha_app
+  event_data:
+    type: button
+action:
+- variables:
+    data: '{{ trigger.event.data.data }}'
+- choose:
+  - conditions:
+    - '{{ data == "up" }}'
+    sequence: !input up
+  - conditions:
+    - '{{ data == "down" }}'
+    sequence: !input down
+  - conditions:
+    - '{{ data == "left" }}'
+    sequence: !input left
+  - conditions:
+    - '{{ data == "right" }}'
+    sequence: !input right
+  - conditions:
+    - '{{ data == "ok" }}'
+    sequence: !input ok

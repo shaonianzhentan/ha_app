@@ -29,6 +29,11 @@ Android手机推送通知与GPS持续定位
 
 [![导入蓝图](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fshaonianzhentan%2Fha_app%2Fblob%2Fmain%2Fblueprints%2Fha_app_sms.yaml)
 
+
+按钮点击
+
+[![导入蓝图](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fshaonianzhentan%2Fha_app%2Fblob%2Fmain%2Fblueprints%2Fha_app_button.yaml)
+
 ## [使用说明](https://mp.weixin.qq.com/s/t5xaet2Kj5zbgKrasNTAyQ)
 
 > **Android手机权限配置**【下面是我的小米手机需要的权限】

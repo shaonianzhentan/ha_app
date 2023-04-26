@@ -33,7 +33,7 @@ class HttpView(HomeAssistantView):
         
         push_token = body.get('push_token')
         title = body.get('title')
-        message = body.get('message')            
+        message = body.get('message')
 
         registration_info = body.get('registration_info')
         webhook_id = registration_info.get('webhook_id')
@@ -96,7 +96,7 @@ class HttpView(HomeAssistantView):
             data = body.get('data')
 
             # 发送事件
-            if ['notify', 'sms'].count(_type) > 0:
+            if ['notify', 'sms', 'button'].count(_type) > 0:
                 hass.bus.fire('ha_app', { 'type': _type, 'data': data })
 
             if _type == 'gps': # 位置

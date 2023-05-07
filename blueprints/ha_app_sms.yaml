@@ -12,19 +12,19 @@ blueprint:
         action: {}
     express:
       name: 快递消息
-      description: 快递收件码短信消息
+      description: 菜鸟驿站、兔喜生活、快递超市、百世快递、微快递、申通快递、菜鸟智能柜
       default: []
       selector:
         action: {}
     captcha:
       name: 验证码
-      description: 验证码短信消息
+      description: 验证码
       default: []
       selector:
         action: {}
-    wechat_payment:
-      name: 微信支付
-      description: 微信支付短信消息
+    bank:
+      name: 银行
+      description: 交通银行、招商银行、农业银行、光大银行、建设银行、网商银行、工商银行、平安银行、微众银行、广发银行、湖北农信
       default: []
       selector:
         action: {}
@@ -41,13 +41,28 @@ action:
   - conditions:
     - '{{ "菜鸟驿站" in text }}'
     - '{{ "兔喜生活" in text }}'
+    - '{{ "快递超市" in text }}'
+    - '{{ "百世快递" in text }}'
+    - '{{ "微快递" in text }}'
+    - '{{ "申通快递" in text }}'
+    - '{{ "菜鸟智能柜" in text }}'
     sequence: !input express
   - conditions:
     - '{{ "验证码" in text }}'
     sequence: !input captcha
   - conditions:
-    - '{{ "微信支付" in text }}'
-    sequence: !input wechat_payment
+    - '{{ "交通银行" in text }}'
+    - '{{ "招商银行" in text }}'
+    - '{{ "农业银行" in text }}'
+    - '{{ "光大银行" in text }}'
+    - '{{ "建设银行" in text }}'
+    - '{{ "网商银行" in text }}'
+    - '{{ "工商银行" in text }}'
+    - '{{ "平安银行" in text }}'
+    - '{{ "微众银行" in text }}'
+    - '{{ "广发银行" in text }}'
+    - '{{ "湖北农信" in text }}'
+    sequence: !input bank
   - conditions:
     - '{{ text != "" }}'
     sequence: !input other

@@ -54,6 +54,10 @@ class HttpView(HomeAssistantView):
             tts = data.get('tts')
             if tts is not None:
                 result['tts'] = tts
+            # 启动项
+            start = data.get('start')
+            if start is not None:
+                result['start'] = start
 
         notification_id = f'{md5(webhook_id)}{self.count}'
         self.count = self.count + 1

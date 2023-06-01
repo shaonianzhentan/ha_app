@@ -94,31 +94,21 @@ class HttpView(HomeAssistantView):
         base_url = get_url(hass)
         webhook_url = f"{base_url}/api/webhook/{webhook_id}"
 
-        # 新版数据
         _type = body.get('type')
-        if _type is not None:
-            data = body.get('data')
+        data = body.get('data')
 
-            # 发送事件
-            if ['notify', 'sms', 'button'].count(_type) > 0:
-                hass.bus.fire('ha_app', { 'type': _type, 'data': data })
+        # 发送事件
+        if ['notify', 'sms', 'button'].count(_type) > 0:
+            hass.bus.fire('ha_app', { 'type': _type, 'data': data })
 
-            if _type == 'gps': # 位置
-                hass.loop.create_task(self.async_update_device(hass, webhook_url, data))
-            elif _type == 'notify': # 通知                
-                hass.loop.create_task(self.async_update_notify(hass, webhook_url, data))
-            elif _type == 'ringing': # 来电
-                hass.loop.create_task(self.async_update_ringing(hass, webhook_url, data))
-            elif _type == 'sms': # 短信
-                hass.loop.create_task(self.async_update_sms(hass, webhook_url, data))
-            elif _type == 'clipbrd': # 剪切板
-                hass.loop.create_task(self.async_update_clipbrd(hass, webhook_url, data))
-            elif _type == 'ScreenOn': # 亮屏
-                battery = data.get('battery')
-                if battery is not None:
-                    hass.loop.create_task(self.async_update_battery(hass, webhook_url, battery))
-        else:
-            hass.loop.create_task(self.async_update_device(hass, webhook_url, body))
+        if _type == 'gps': # 位置
+            hass.loop.create_task(self.async_update_device(hass, webhook_url, data))
+        elif _type == 'notify': # 通知                
+            hass.loop.create_task(self.async_update_notify(hass, webhook_url, data))
+        elif _type == 'sms': # 短信
+            hass.loop.create_task(self.async_update_sms(hass, webhook_url, data))
+        elif _type == 'screen': # 屏幕
+            hass.loop.create_task(self.async_update_screen(hass, webhook_url, data))
 
         _list = []
         states = hass.states.async_all('persistent_notification')
@@ -304,64 +294,34 @@ class HttpView(HomeAssistantView):
                     "type": "register_sensor"
                 })
 
-    async def async_update_clipbrd(self, hass, webhook_url, data):
-        ''' 剪贴板 '''
+    async def async_update_screen(self, hass, webhook_url, data):
+        ''' 更新屏幕 '''
+
+        battery = data.get('battery')
+        text = data.get('text')
 
         sensor_data = {
-            "attributes": {
-                "text": str(data)
-            },
-            "state": self.now,
+            "state": text,
             "type": "sensor",
-            "icon": "mdi:clipboard-text",
-            "unique_id": "clip_board"
+            "icon": "mdi:cellphone-text",
+            "unique_id": "cellphone_screen"
         }
         result = await self.async_http_post(hass, webhook_url, {
             "data": [ sensor_data ],
             "type": "update_sensor_states"
         })
-        bl = result.get('clip_board')
+        bl = result.get('cellphone_screen')
         if bl is not None and 'error' in bl:
             error = bl.get('error')
             if error.get('code') == 'not_registered':
                 # 注册传感器
                 await self.async_http_post(hass, webhook_url, {
                     "data": {
-                        "device_class": "timestamp",
                         "entity_category": "diagnostic",
-                        "name": "剪贴板",
+                        "name": "屏幕",
                         **sensor_data
                     },
                     "type": "register_sensor"
                 })
-
-    async def async_update_ringing(self, hass, webhook_url, data):
-        ''' 来电响铃 '''
-
-        sensor_data = {
-            "attributes": {
-                "number": str(data)
-            },
-            "state": self.now,
-            "type": "sensor",
-            "icon": "mdi:phone-incoming",
-            "unique_id": "ringing"
-        }
-        result = await self.async_http_post(hass, webhook_url, {
-            "data": [ sensor_data ],
-            "type": "update_sensor_states"
-        })
-        bl = result.get('ringing')
-        if bl is not None and 'error' in bl:
-            error = bl.get('error')
-            if error.get('code') == 'not_registered':
-                # 注册传感器
-                await self.async_http_post(hass, webhook_url, {
-                    "data": {
-                        "device_class": "timestamp",
-                        "entity_category": "diagnostic",
-                        "name": "来电",
-                        **sensor_data
-                    },
-                    "type": "register_sensor"
-                })
+        # 更新手机电量
+        await self.async_update_battery(hass, webhook_url, battery)

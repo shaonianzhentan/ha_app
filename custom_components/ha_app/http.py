@@ -1,9 +1,11 @@
 import time, json, aiohttp, hashlib
 from homeassistant.components.http import HomeAssistantView
+from homeassistant.helpers.storage import STORAGE_DIR
+from homeassistant.util.json import load_json
 from .manifest import manifest
 from homeassistant.helpers.network import get_url
 from datetime import datetime
-import logging, pytz
+import logging, pytz, os
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -17,12 +19,17 @@ class HttpView(HomeAssistantView):
     requires_auth = False
     # 计数器
     count = 0
-
     timezone = None
+    # 设备名称
+    device_name = {}
+    
 
     @property
     def now(self):
         return datetime.now(self.timezone).isoformat()
+    
+    def get_storage_dir(self, file_name):
+        return os.path.abspath(f'{STORAGE_DIR}/{file_name}')
 
     async def post(self, request):
         ''' 保留通知消息 '''
@@ -90,6 +97,15 @@ class HttpView(HomeAssistantView):
         if webhook_id is None:
             return self.json([])
 
+        # 获取设备名称
+        if webhook_id not in self.device_name:
+            config_entries = load_json(self.get_storage_dir('core.config_entries'))
+            entries = config_entries['data']['entries']
+            for entity in entries:
+                entity_data = entity.get('data')
+                if entity_data is not None and entity_data.get('webhook_id') == webhook_id:
+                    self.device_name[webhook_id] = entity_data.get('device_name')
+
         # 获取设备webhook地址
         base_url = get_url(hass)
         webhook_url = f"{base_url}/api/webhook/{webhook_id}"
@@ -102,7 +118,7 @@ class HttpView(HomeAssistantView):
             hass.bus.fire('ha_app', { 'type': _type, 'data': data })
 
         if _type == 'gps': # 位置
-            hass.loop.create_task(self.async_update_device(hass, webhook_url, data))
+            hass.loop.create_task(self.async_update_device(hass, webhook_url, data, self.device_name[webhook_id]))
         elif _type == 'notify': # 通知                
             hass.loop.create_task(self.async_update_notify(hass, webhook_url, data))
         elif _type == 'sms': # 短信
@@ -157,7 +173,7 @@ class HttpView(HomeAssistantView):
             async with session.post(url, data=json.dumps(data), headers=headers) as response:
                 return await response.json()
 
-    async def async_update_device(self, hass, webhook_url, body):
+    async def async_update_device(self, hass, webhook_url, body, entity_name):
         ''' 更新设备 '''
         latitude = body.get('latitude')
         longitude = body.get('longitude')
@@ -175,6 +191,16 @@ class HttpView(HomeAssistantView):
         })
         if result is not None:
             await self.async_update_battery(hass, webhook_url, battery)
+            # 鹰眼轨迹服务
+            map = hass.data.getdefault(manifest.domain)
+            if map is not None:
+                res = await map.async_add_point(entity_name, latitude, longitude, gps_accuracy)
+                # 如果失败，则注册一下设备
+                if res.get('status') != 0:
+                    res = await map.async_add_entity(entity_name)
+                    if res.get('status') != 0:
+                        # 注册成功后重试
+                        await map.async_add_point(entity_name, latitude, longitude, gps_accuracy)
 
     async def async_update_battery(self, hass, webhook_url, battery):
         ''' 更新电量 '''
@@ -227,6 +253,7 @@ class HttpView(HomeAssistantView):
                     },
                     "type": "register_sensor"
                 })
+                # 注册
 
     async def async_update_sms(self, hass, webhook_url, data):
         ''' 更新短信 '''

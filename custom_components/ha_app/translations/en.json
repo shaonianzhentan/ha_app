@@ -11,5 +11,20 @@
         "abort": {
             "single_instance_allowed": "仅允许单个配置."
         }
+    },
+    "options": {
+        "step": {
+            "user": {
+                "title": "百度地图轨迹服务",
+                "description": "实时全天在线监控设备运动轨迹",
+                "data": {
+                    "ak": "AK密钥",
+                    "service_id": "服务ID"
+                }
+            }
+        },
+        "error": {
+            "fail": "验证失败，请检查鹰眼轨迹服务是否启用"
+        }
     }
 }

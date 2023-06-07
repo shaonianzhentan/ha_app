@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 import voluptuous as vol
-import hashlib, uuid
-import urllib.parse
 
-from homeassistant.config_entries import ConfigFlow
+from homeassistant.config_entries import ConfigFlow, OptionsFlow, ConfigEntry
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.core import callback
+from .baidu_map import BaiduMap
 
 from .manifest import manifest
 
@@ -29,3 +29,36 @@ class SimpleConfigFlow(ConfigFlow, domain=DOMAIN):
             return self.async_show_form(step_id="user", data_schema=DATA_SCHEMA)
 
         return self.async_create_entry(title=DOMAIN, data={})
+    
+    @staticmethod
+    @callback
+    def async_get_options_flow(entry: ConfigEntry):
+        return OptionsFlowHandler(entry)
+
+
+class OptionsFlowHandler(OptionsFlow):
+    def __init__(self, config_entry: ConfigEntry):
+        self.config_entry = config_entry
+
+    async def async_step_init(self, user_input=None):
+        return await self.async_step_user(user_input)
+
+    async def async_step_user(self, user_input=None):
+        options = self.config_entry.options
+        errors = {}
+        if user_input is not None:
+            # 验证一下
+            ak = user_input.get('ak')
+            service_id = user_input.get('service_id')
+            map = BaiduMap(self.hass, ak, service_id)
+            res = await map.async_get_entitylist()
+            if res.get('status') == 0:
+                return self.async_create_entry(title='', data=user_input)
+            else:
+                errors['base'] = 'fail'
+
+        DATA_SCHEMA = vol.Schema({
+            vol.Required("ak", default=options.get('ak')): str,
+            vol.Required("service_id", default=options.get('service_id')): str
+        })
+        return self.async_show_form(step_id="user", data_schema=DATA_SCHEMA, errors=errors)

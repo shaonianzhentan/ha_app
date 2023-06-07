@@ -10,8 +10,6 @@ Android手机推送通知与GPS持续定位
 [![badge](https://img.shields.io/badge/wechat-微信控制-6cae6a?logo=wechat&style=for-the-badge)](https://github.com/shaonianzhentan/ha_wechat)
 [![badge](https://img.shields.io/badge/android-家庭助理-purple?logo=android&style=for-the-badge)](https://github.com/shaonianzhentan/ha_app)
 
-[![badge](https://img.shields.io/badge/QQ群-64185969-76beff?logo=tencentqq&style=for-the-badge)](https://qm.qq.com/cgi-bin/qm/qr?k=m4uDQuuAJCnCll6PuQZUnnJ0zEy7zuk2&jump_from=webapi&authKey=WTxRChNkBUDdVsTcYHeO8yb98Uu8WGJC3hxw53Il4PB7RgBTQ6StHa43MwZJtN5w)
-
 ## 安装
 
 安装完成重启HA，刷新一下页面，在集成里搜索`家庭助理Android应用`
@@ -62,6 +60,20 @@ Android手机推送通知与GPS持续定位
     - 应用需开启`通知类短信`权限
 - [ ] 手机TTS
 - [ ] 音乐操作
+
+**运行轨迹**
+
+使用百度地图鹰眼轨迹服务，24小时监控设备位置
+
+https://lbsyun.baidu.com/trace/admin/service
+
+
+**应用下载**
+
+> 点击加入QQ群下载更多APK文件
+
+[![badge](https://img.shields.io/badge/QQ群-64185969-76beff?logo=tencentqq&style=for-the-badge)](https://qm.qq.com/cgi-bin/qm/qr?k=m4uDQuuAJCnCll6PuQZUnnJ0zEy7zuk2&jump_from=webapi&authKey=WTxRChNkBUDdVsTcYHeO8yb98Uu8WGJC3hxw53Il4PB7RgBTQ6StHa43MwZJtN5w)
+
 
 > 关注后回复 `家庭助理Android应用` 下载APK文件
 

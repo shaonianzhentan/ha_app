@@ -30,6 +30,21 @@ class HttpView(HomeAssistantView):
     def get_storage_dir(self, file_name):
         return os.path.abspath(f'{STORAGE_DIR}/{file_name}')
 
+    def get_device(self, webhook_id):
+        ''' 获取设备信息 '''
+        if webhook_id not in self.device:
+            config_entries = load_json(self.get_storage_dir('core.config_entries'))
+            entries = config_entries['data']['entries']
+            for entity in entries:
+                entity_data = entity.get('data')
+                if entity_data is not None and entity_data.get('webhook_id') == webhook_id:
+                    self.device[webhook_id] = {
+                        'id': entity_data.get('device_id'),
+                        'latitude': 0,
+                        'longitude': 0
+                    }
+        return self.device.get(webhook_id)
+
     async def post(self, request):
         ''' 保留通知消息 '''
         hass = request.app["hass"]
@@ -65,7 +80,8 @@ class HttpView(HomeAssistantView):
             if start is not None:
                 result['start'] = start
 
-        notification_id = f'{md5(webhook_id)}{self.count}'
+        device = self.get_device(webhook_id)
+        notification_id = f'{md5(device.get("id"))}{self.count}'
         self.count = self.count + 1
         if self.count > 50:
             self.count = 0
@@ -96,19 +112,6 @@ class HttpView(HomeAssistantView):
         if webhook_id is None:
             return self.json([])
 
-        # 获取设备名称
-        if webhook_id not in self.device:
-            config_entries = load_json(self.get_storage_dir('core.config_entries'))
-            entries = config_entries['data']['entries']
-            for entity in entries:
-                entity_data = entity.get('data')
-                if entity_data is not None and entity_data.get('webhook_id') == webhook_id:
-                    self.device[webhook_id] = {
-                        'id': entity_data.get('device_id'),
-                        'latitude': 0,
-                        'longitude': 0
-                    }
-
         # 获取设备webhook地址
         base_url = get_url(hass)
         webhook_url = f"{base_url}/api/webhook/{webhook_id}"
@@ -120,10 +123,9 @@ class HttpView(HomeAssistantView):
         if ['notify', 'sms', 'button'].count(_type) > 0:
             hass.bus.fire('ha_app', { 'type': _type, 'data': data })
 
+        device = self.get_device(webhook_id)
         if _type == 'gps': # 位置
-            device = self.device.get(webhook_id)
-            if device is not None:
-                hass.loop.create_task(self.async_update_device(hass, webhook_url, data, device))
+            hass.loop.create_task(self.async_update_device(hass, webhook_url, data, device))
         elif _type == 'notify': # 通知                
             hass.loop.create_task(self.async_update_notify(hass, webhook_url, data))
         elif _type == 'sms': # 短信
@@ -133,7 +135,7 @@ class HttpView(HomeAssistantView):
 
         _list = []
         states = hass.states.async_all('persistent_notification')
-        notification_id = md5(webhook_id)
+        notification_id = md5(device.get('id'))
         for state in states:
             if state.entity_id.startswith(f'persistent_notification.{notification_id}'):
                 message = state.attributes.get('message')

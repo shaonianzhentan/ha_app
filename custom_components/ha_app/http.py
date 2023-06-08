@@ -21,8 +21,7 @@ class HttpView(HomeAssistantView):
     count = 0
     timezone = None
     # 设备名称
-    device_name = {}
-    
+    device = {}
 
     @property
     def now(self):
@@ -98,13 +97,17 @@ class HttpView(HomeAssistantView):
             return self.json([])
 
         # 获取设备名称
-        if webhook_id not in self.device_name:
+        if webhook_id not in self.device:
             config_entries = load_json(self.get_storage_dir('core.config_entries'))
             entries = config_entries['data']['entries']
             for entity in entries:
                 entity_data = entity.get('data')
                 if entity_data is not None and entity_data.get('webhook_id') == webhook_id:
-                    self.device_name[webhook_id] = entity_data.get('device_name')
+                    self.device[webhook_id] = {
+                        'id': entity_data.get('device_id'),
+                        'latitude': 0,
+                        'longitude': 0
+                    }
 
         # 获取设备webhook地址
         base_url = get_url(hass)
@@ -118,13 +121,15 @@ class HttpView(HomeAssistantView):
             hass.bus.fire('ha_app', { 'type': _type, 'data': data })
 
         if _type == 'gps': # 位置
-            hass.loop.create_task(self.async_update_device(hass, webhook_url, data, self.device_name[webhook_id]))
+            device = self.device.get(webhook_id)
+            if device is not None:
+                hass.loop.create_task(self.async_update_device(hass, webhook_url, data, device))
         elif _type == 'notify': # 通知                
             hass.loop.create_task(self.async_update_notify(hass, webhook_url, data))
         elif _type == 'sms': # 短信
             hass.loop.create_task(self.async_update_sms(hass, webhook_url, data))
-        elif _type == 'screen': # 屏幕
-            hass.loop.create_task(self.async_update_screen(hass, webhook_url, data))
+        elif _type == 'event': # 系统事件
+            hass.loop.create_task(self.async_update_event(hass, webhook_url, data))
 
         _list = []
         states = hass.states.async_all('persistent_notification')
@@ -173,7 +178,7 @@ class HttpView(HomeAssistantView):
             async with session.post(url, data=json.dumps(data), headers=headers) as response:
                 return await response.json()
 
-    async def async_update_device(self, hass, webhook_url, body, entity_name):
+    async def async_update_device(self, hass, webhook_url, body, device):
         ''' 更新设备 '''
         latitude = body.get('latitude')
         longitude = body.get('longitude')
@@ -192,15 +197,16 @@ class HttpView(HomeAssistantView):
         if result is not None:
             await self.async_update_battery(hass, webhook_url, battery)
             # 鹰眼轨迹服务
-            map = hass.data.getdefault(manifest.domain)
+            map = hass.data.get(manifest.domain)
             if map is not None:
-                res = await map.async_add_point(entity_name, latitude, longitude, gps_accuracy)
-                # 如果失败，则注册一下设备
-                if res.get('status') != 0:
-                    res = await map.async_add_entity(entity_name)
-                    if res.get('status') != 0:
-                        # 注册成功后重试
-                        await map.async_add_point(entity_name, latitude, longitude, gps_accuracy)
+                device_id = device.get('id')
+                if device.get('latitude') == latitude and device.get('longitude') == longitude:
+                    _LOGGER.debug('位置相同不上报，节省额度')
+                else:
+                    await map.async_add_point(device_id, latitude, longitude, gps_accuracy)
+                # 记录坐标
+                device['latitude'] = latitude
+                device['longitude'] = longitude
 
     async def async_update_battery(self, hass, webhook_url, battery):
         ''' 更新电量 '''
@@ -321,8 +327,8 @@ class HttpView(HomeAssistantView):
                     "type": "register_sensor"
                 })
 
-    async def async_update_screen(self, hass, webhook_url, data):
-        ''' 更新屏幕 '''
+    async def async_update_event(self, hass, webhook_url, data):
+        ''' 系统事件 '''
 
         battery = data.get('battery')
         text = data.get('text')
@@ -330,14 +336,14 @@ class HttpView(HomeAssistantView):
         sensor_data = {
             "state": text,
             "type": "sensor",
-            "icon": "mdi:cellphone-text",
-            "unique_id": "cellphone_screen"
+            "icon": "mdi:cellphone-information",
+            "unique_id": "system_event"
         }
         result = await self.async_http_post(hass, webhook_url, {
             "data": [ sensor_data ],
             "type": "update_sensor_states"
         })
-        bl = result.get('cellphone_screen')
+        bl = result.get('system_event')
         if bl is not None and 'error' in bl:
             error = bl.get('error')
             if error.get('code') == 'not_registered':
@@ -345,7 +351,7 @@ class HttpView(HomeAssistantView):
                 await self.async_http_post(hass, webhook_url, {
                     "data": {
                         "entity_category": "diagnostic",
-                        "name": "屏幕",
+                        "name": "系统事件",
                         **sensor_data
                     },
                     "type": "register_sensor"

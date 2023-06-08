@@ -1,4 +1,6 @@
-import requests, time
+import requests, time, logging
+
+_LOGGER = logging.getLogger(__name__)
 
 class BaiduMap():
 
@@ -10,9 +12,8 @@ class BaiduMap():
         }
 
     def get_entity_name(self, name):
-        name = ''.join([i.strip(' ') for i in name])
-        return name
-    
+        return name.replace(' ', '')
+
     async def async_get_entitylist(self):
         ''' 验证实体 '''
         result = await self.hass.async_add_executor_job(self.get, 'https://yingyan.baidu.com/api/v3/entity/list', {
@@ -20,19 +21,20 @@ class BaiduMap():
         })
         return result
 
-    async def async_add_entity(self, name):
+    async def async_add_entity(self, device_id, device_name):
         ''' 注册设备 '''
         result = await self.hass.async_add_executor_job(self.post, 'https://yingyan.baidu.com/api/v3/entity/add', {
             **self.config,
-            'entity_name': self.get_entity_name(name),
+            'entity_name': device_id,
+            'entity_desc': self.get_entity_name(device_name)
         })
         return result
 
-    async def async_add_point(self, name, latitude, longitude, radius):
+    async def async_add_point(self, device_id, latitude, longitude, radius):
         ''' 上报位置 '''
         result = await self.hass.async_add_executor_job(self.post, 'https://yingyan.baidu.com/api/v3/track/addpoint', {
             **self.config,
-            'entity_name': self.get_entity_name(name),
+            'entity_name': device_id,
             'latitude': latitude,
             'longitude': longitude,
             'radius': radius,
@@ -43,8 +45,10 @@ class BaiduMap():
 
     def post(self, url, data):
         res = requests.post(url, data=data)
-        return res.json()
+        result = res.json()
+        return result
 
     def get(self, url, data):
         res = requests.get(url, params=data)
-        return res.json()
+        result = res.json()
+        return result

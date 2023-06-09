@@ -1,5 +1,6 @@
 import time, json, aiohttp, hashlib
 from homeassistant.components.http import HomeAssistantView
+from homeassistant.components.persistent_notification import _async_get_or_create_notifications
 from homeassistant.helpers.storage import STORAGE_DIR
 from homeassistant.util.json import load_json
 from .manifest import manifest
@@ -133,14 +134,16 @@ class HttpView(HomeAssistantView):
         elif _type == 'event': # 系统事件
             hass.loop.create_task(self.async_update_event(hass, webhook_url, data))
 
+        # 使用新版通知
         _list = []
-        states = hass.states.async_all('persistent_notification')
+        notifications = _async_get_or_create_notifications(hass)
         notification_id = md5(device.get('id'))
-        for state in states:
-            if state.entity_id.startswith(f'persistent_notification.{notification_id}'):
-                message = state.attributes.get('message')
+        for key in notifications:
+            if key.startswith(notification_id):
+                notification = notifications[key]
+                message = notification.get('message')
                 result = json.loads(message)
-                result['id'] = state.entity_id.replace('persistent_notification.', '')
+                result['id'] = key
                 _list.append(result)
         return self.json(_list)
 

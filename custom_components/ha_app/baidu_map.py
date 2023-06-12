@@ -19,6 +19,8 @@ class BaiduMap():
         result = await self.hass.async_add_executor_job(self.get, 'https://yingyan.baidu.com/api/v3/entity/list', {
             **self.config
         })
+        if result.get('status') == 3003:
+          result = await self.async_add_entity('homeassistant', '在HA中使用初始创建_并不会直接使用')
         return result
 
     async def async_add_entity(self, device_id, device_name):

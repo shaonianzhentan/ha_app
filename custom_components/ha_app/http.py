@@ -8,6 +8,8 @@ from homeassistant.helpers.network import get_url
 from datetime import datetime
 import logging, pytz, os
 
+from .file_api import mkdir
+
 _LOGGER = logging.getLogger(__name__)
 
 def md5(data):
@@ -376,31 +378,50 @@ class HttpViewTTS(HomeAssistantView):
     async def put(self, request):
         hass = request.app["hass"]
 
+        file = None
+        entities = None
         reader = await request.multipart()
-        file = await reader.next()
-        print(file)
+        while True:
+            part = await reader.next()
+            if part is None:
+                break
+            '''
+            if part.headers[aiohttp.hdrs.CONTENT_TYPE] == 'application/json':
+                metadata = await part.json()
+                continue
+            '''
+            if part.name == 'file':
+                file = part
+            elif part.name == 'entities':
+                entities = await part.text()
 
-        tts_url = await self.async_write_file(hass, file)
-        entity_id = ''
+        if file is not None:
+            tts_url = await self.async_write_file(hass, file)
 
-        self.call_service(hass, 'media_player.play_media', {
-                    'media_content_type': 'music',
-                    'media_content_id': tts_url,
-                    'entity_id': entity_id
-                })
-        return self.json_message("推送成功")
+            self.call_service(hass, 'media_player.play_media', {
+                        'media_content_type': 'music',
+                        'media_content_id': tts_url,
+                        'entity_id': entities
+                    })
+            return self.json_message("推送成功")
+
+        return self.json_message("参数异常", status_code=500)
 
     async def async_write_file(self, hass, file):
+        filename = file.filename
         size = 0
-        path = hass.config.path(f'tts/{file.filename}')
-        with open(path, 'wb') as f:
+        path = hass.config.path(f'media/ha_app')
+        mkdir(path)
+        with open(f'{path}/{filename}', 'wb') as f:
             while True:
                 chunk = await file.read_chunk()  # 默认是8192个字节。
                 if not chunk:
                     break
                 size += len(chunk)
                 f.write(chunk)
-        return path
+
+        base_url = get_url(hass)
+        return f'{base_url}/media/local/ha_app/{filename}'
 
     def call_service(self, hass, service_name, service_data):
         ''' 调用服务 '''

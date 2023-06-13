@@ -397,9 +397,10 @@ class HttpViewTTS(HomeAssistantView):
 
         if file is not None:
             tts_url = await self.async_write_file(hass, file)
+            print(tts_url)
 
             self.call_service(hass, 'media_player.play_media', {
-                        'media_content_type': 'music',
+                        'media_content_type': 'audio/mpeg',
                         'media_content_id': tts_url,
                         'entity_id': entities
                     })
@@ -420,8 +421,7 @@ class HttpViewTTS(HomeAssistantView):
                 size += len(chunk)
                 f.write(chunk)
 
-        base_url = get_url(hass)
-        return f'{base_url}/media/local/ha_app/{filename}'
+        return f'media-source://media_source/local/ha_app/{filename}'
 
     def call_service(self, hass, service_name, service_data):
         ''' 调用服务 '''

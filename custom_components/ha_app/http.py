@@ -396,7 +396,8 @@ class HttpViewTTS(HomeAssistantView):
             formData[part.name] = value
 
         file = formData.get('file')
-        entities = formData.get('entities')        
+        entities = formData.get('entities')
+        print(file, entities)
         if file is not None and entities is not None:
             self.call_service(hass, 'media_player.play_media', {
                         'media_content_type': 'audio/mpeg',

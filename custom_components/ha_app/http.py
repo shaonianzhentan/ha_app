@@ -378,9 +378,8 @@ class HttpViewTTS(HomeAssistantView):
     async def put(self, request):
         hass = request.app["hass"]
 
-        file = None
-        entities = None
         reader = await request.multipart()
+        formData = {}
         while True:
             part = await reader.next()
             if part is None:
@@ -390,18 +389,18 @@ class HttpViewTTS(HomeAssistantView):
                 metadata = await part.json()
                 continue
             '''
-            if part.name == 'file':
-                file = part
-            elif part.name == 'entities':
-                entities = await part.text()
+            if part.filename is None:
+                value = await part.text()
+            else:
+                value = await self.async_write_file(hass, part)
+            formData[part.name] = value
 
-        if file is not None:
-            tts_url = await self.async_write_file(hass, file)
-            print(tts_url)
-
+        file = formData.get('file')
+        entities = formData.get('entities')        
+        if file is not None and entities is not None:
             self.call_service(hass, 'media_player.play_media', {
                         'media_content_type': 'audio/mpeg',
-                        'media_content_id': tts_url,
+                        'media_content_id': file,
                         'entity_id': entities
                     })
             return self.json_message("推送成功")

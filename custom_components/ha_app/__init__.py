@@ -5,7 +5,7 @@ import homeassistant.helpers.config_validation as cv
 import logging
 
 from .manifest import manifest
-from .http import HttpView
+from .http import HttpView, HttpViewTTS
 from .baidu_map import BaiduMap
 
 _LOGGER = logging.getLogger(__name__)
@@ -14,6 +14,7 @@ CONFIG_SCHEMA = cv.deprecated(manifest.domain)
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     config = entry.data
     hass.http.register_view(HttpView)
+    hass.http.register_view(HttpViewTTS)
     entry.async_on_unload(entry.add_update_listener(update_listener))
     await update_listener(hass, entry)
     return True

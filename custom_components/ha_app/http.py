@@ -129,6 +129,9 @@ class HttpView(HomeAssistantView):
             hass.loop.create_task(self.async_update_device(hass, webhook_url, data, device))
         elif _type == 'notify': # 通知                
             hass.loop.create_task(self.async_update_notify(hass, webhook_url, data))
+        elif _type == 'notify_list': # 通知列表
+            for item in data:
+                await self.async_update_notify(hass, webhook_url, item)
         elif _type == 'sms': # 短信
             hass.loop.create_task(self.async_update_sms(hass, webhook_url, data))
         elif _type == 'event': # 系统事件
@@ -363,3 +366,43 @@ class HttpView(HomeAssistantView):
                 })
         # 更新手机电量
         await self.async_update_battery(hass, webhook_url, battery)
+
+class HttpViewTTS(HomeAssistantView):
+
+    url = "/api/haapp/tts"
+    name = "api:haapp:tts"
+    requires_auth = True
+
+    async def put(self, request):
+        hass = request.app["hass"]
+
+        reader = await request.multipart()
+        file = await reader.next()
+        print(file)
+
+        tts_url = await self.async_write_file(hass, file)
+        entity_id = ''
+
+        self.call_service(hass, 'media_player.play_media', {
+                    'media_content_type': 'music',
+                    'media_content_id': tts_url,
+                    'entity_id': entity_id
+                })
+        return self.json_message("推送成功")
+
+    async def async_write_file(self, hass, file):
+        size = 0
+        path = hass.config.path(f'tts/{file.filename}')
+        with open(path, 'wb') as f:
+            while True:
+                chunk = await file.read_chunk()  # 默认是8192个字节。
+                if not chunk:
+                    break
+                size += len(chunk)
+                f.write(chunk)
+        return path
+
+    def call_service(self, hass, service_name, service_data):
+        ''' 调用服务 '''
+        arr = service_name.split('.')
+        hass.loop.create_task(hass.services.async_call(arr[0], arr[1], service_data))

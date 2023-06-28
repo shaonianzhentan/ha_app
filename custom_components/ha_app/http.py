@@ -411,7 +411,7 @@ class HttpViewTTS(HomeAssistantView):
     async def async_write_file(self, hass, file):
         filename = file.filename
         size = 0
-        path = hass.config.path(f'media/ha_app')
+        path = hass.config.media_dirs.get('local', hass.config.path("media")) + '/ha_app'
         mkdir(path)
         with open(f'{path}/{filename}', 'wb') as f:
             while True:

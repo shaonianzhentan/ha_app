@@ -34,6 +34,18 @@ blueprint:
       default: []
       selector:
         action: {}
+    volume_up:
+      name: 🔊
+      description: 音量+
+      default: []
+      selector:
+        action: {}
+    volume_down:
+      name: 🔈
+      description: 音量-
+      default: []
+      selector:
+        action: {}
 trigger:
 - platform: event
   event_type: ha_app
@@ -58,3 +70,9 @@ action:
   - conditions:
     - '{{ data == "ok" }}'
     sequence: !input ok
+  - conditions:
+    - '{{ data == "volume_up" }}'
+    sequence: !input volume_up
+  - conditions:
+    - '{{ data == "volume_down" }}'
+    sequence: !input volume_down

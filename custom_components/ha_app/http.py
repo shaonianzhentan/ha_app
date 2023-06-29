@@ -427,3 +427,21 @@ class HttpViewTTS(HomeAssistantView):
         ''' 调用服务 '''
         arr = service_name.split('.')
         hass.loop.create_task(hass.services.async_call(arr[0], arr[1], service_data))
+
+class HttpViewConfig(HomeAssistantView):
+
+    url = "/api/haapp/config"
+    name = "api:haapp:config"
+    requires_auth = True
+
+    async def get(self, request):
+        hass = request.app["hass"]
+        body = await request.json()
+        _type = body.get('type')
+        if _type == 'get_url':
+            return self.json({
+                'internal_url': get_url(hass),
+                'external_url': get_url(hass, prefer_external=True)
+            })
+
+        return self.json_message("参数异常", status_code=500)

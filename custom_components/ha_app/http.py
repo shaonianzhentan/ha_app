@@ -136,6 +136,8 @@ class HttpView(HomeAssistantView):
                 await self.async_update_notify(hass, webhook_url, item)
         elif _type == 'sms': # 短信
             hass.loop.create_task(self.async_update_sms(hass, webhook_url, data))
+        elif _type == 'nfc': # NFC
+            hass.loop.create_task(self.async_update_nfc(hass, webhook_url, data))
         elif _type == 'event': # 系统事件
             hass.loop.create_task(self.async_update_event(hass, webhook_url, data))
 
@@ -298,6 +300,36 @@ class HttpView(HomeAssistantView):
                         "device_class": "timestamp",
                         "entity_category": "diagnostic",
                         "name": "短信",
+                        **sensor_data
+                    },
+                    "type": "register_sensor"
+                })
+
+    async def async_update_nfc(self, hass, webhook_url, data):
+        ''' 更新NFC '''
+        sensor_data = {
+            "attributes": {
+                "id": data['id']
+            },
+            "state": self.now,
+            "type": "sensor",
+            "icon": "mdi:nfc-variant",
+            "unique_id": "scan_nfc"
+        }
+        result = await self.async_http_post(hass, webhook_url, {
+            "data": [ sensor_data ],
+            "type": "update_sensor_states"
+        })
+        bl = result.get('scan_nfc')
+        if bl is not None and 'error' in bl:
+            error = bl.get('error')
+            if error.get('code') == 'not_registered':
+                # 注册传感器
+                await self.async_http_post(hass, webhook_url, {
+                    "data": {
+                        "device_class": "timestamp",
+                        "entity_category": "diagnostic",
+                        "name": "NFC",
                         **sensor_data
                     },
                     "type": "register_sensor"

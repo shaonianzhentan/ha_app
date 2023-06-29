@@ -60,6 +60,7 @@ Android手机推送通知与GPS持续定位
     - 应用需开启`通知类短信`权限
 - [x] 来电通知
 - [x] 家庭传音
+- [x] NFC扫描
 - [ ] 手机TTS
 - [ ] 音乐操作
 
@@ -68,7 +69,6 @@ Android手机推送通知与GPS持续定位
 使用百度地图鹰眼轨迹服务，24小时监控设备位置
 
 https://lbsyun.baidu.com/trace/admin/service
-
 
 **应用下载**
 

@@ -84,7 +84,7 @@ class HttpView(HomeAssistantView):
                 result['start'] = start
 
         device = self.get_device(webhook_id)
-        notification_id = f'{md5(device.get("id"))}{self.count}'
+        notification_id = f'{md5(device.get("id"))}{time.strftime("%m%d%H%M%S", time.localtime())}{self.count}'
         self.count = self.count + 1
         if self.count > 50:
             self.count = 0

@@ -1,5 +1,5 @@
 blueprint:
-  name: APP应用NFC标签扫描
+  name: APP应用NFC标签
   description: 使用家庭助理APP扫描NFC标签触发自动化
   domain: automation
   source_url: https://github.com/shaonianzhentan/ha_app/blob/main/blueprints/ha_app_nfc.yaml
@@ -7,11 +7,11 @@ blueprint:
     sensor_id:
       name: NFC传感器
       description: 没有匹配到应用时，执行此服务
-      required: true
       selector:
         entity:
           integration: mobile_app
           domain: sensor
+          device_class: timestamp
     tag_1:
       name: 示例1
       description: 这是一个身份证

@@ -468,8 +468,8 @@ class HttpViewConfig(HomeAssistantView):
 
     async def get(self, request):
         hass = request.app["hass"]
-        body = await request.json()
-        _type = body.get('type')
+        query = request.query
+        _type = query.get('type')
         if _type == 'get_url':
             return self.json({
                 'internal_url': get_url(hass),

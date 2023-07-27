@@ -9,6 +9,7 @@ from homeassistant.core import callback
 from .baidu_map import BaiduMap
 
 from .manifest import manifest
+from .const import CONVERSATION_ASSISTANT
 
 DATA_SCHEMA = vol.Schema({})
 
@@ -27,6 +28,12 @@ class SimpleConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is None:
             return self.async_show_form(step_id="user", data_schema=DATA_SCHEMA)
+
+        # 检测是否配置语音小助手
+        if self.hass.data.get(CONVERSATION_ASSISTANT) is None:
+            return self.async_show_form(step_id="user", data_schema=DATA_SCHEMA, errors = {
+                'base': 'conversation'
+            })
 
         return self.async_create_entry(title=DOMAIN, data={})
     

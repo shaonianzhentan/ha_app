@@ -98,7 +98,7 @@ class HttpView(HomeAssistantView):
         
         webhook_id = body.get('webhook_id')
         if webhook_id is None:
-            return self.json([])
+            return self.json_message("参数异常", status_code=204)
 
         # 获取设备webhook地址
         base_url = get_url(hass)
@@ -112,6 +112,9 @@ class HttpView(HomeAssistantView):
             hass.bus.fire('ha_app', { 'type': _type, 'data': data })
 
         device = self.get_device(webhook_id)
+        if device is None:
+            return self.json_message("设备未注册", status_code=204)
+
         if _type == 'gps': # 位置
             hass.loop.create_task(self.async_update_device(hass, webhook_url, data, device))
         elif _type == 'notify': # 通知                

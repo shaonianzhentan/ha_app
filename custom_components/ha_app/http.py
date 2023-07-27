@@ -1,4 +1,4 @@
-import time, json, aiohttp, logging
+import time, json, aiohttp, logging, datetime
 from homeassistant.components.http import HomeAssistantView
 
 from homeassistant.util.json import load_json
@@ -139,25 +139,30 @@ class HttpView(HomeAssistantView):
             }
             result = []
             async with aiohttp.ClientSession() as session:
-                async with session.get(f'{base_url}/api/history/period/2023-07-26T00:00:00.000Z', params={
-                    'filter_entity_id': 'conversation.voice'
-                }, headers=headers) as response:
-                    arr = await response.json()
+                today = datetime.date.today()
+                yesterday = today - datetime.timedelta(days=2)
+                tomorrow = today + datetime.timedelta(days=1)
+                async with session.get(f'{base_url}/api/history/period/{yesterday.strftime("%Y-%m-%d")}T00:00:00.000Z', params={
+                    'filter_entity_id': 'conversation.voice',
+                    'end_time': f'{tomorrow.strftime("%Y-%m-%d")}T00:00:00.000Z'
+                }, headers=headers) as res:
+                    arr = await res.json()
                     if len(arr) > 0:
-                        def format_item(state):
+                        for state in arr[0]:
                             attrs = state['attributes']
-                            return {
+                            result.append({
                                 'command': state['state'],
-                                'reply': attrs.get('reply')
-                            }
-                        result = map(format_item, arr[0])
+                                'reply': attrs.get('reply'),
+                                'ctime':  datetime.datetime.fromisoformat(state['last_changed']).strftime('%Y-%m-%d %H:%M:%S')
+                            })
+                        result.sort(reverse=True, key=lambda x:x['ctime'])
             response['conversation_record'] = result
         elif _type == 'conversation.process':
             ''' 控制命令 '''
-            conversation = self.hass.data.get(CONVERSATION_ASSISTANT)
+            conversation = hass.data.get(CONVERSATION_ASSISTANT)
             if conversation is not None:
                 res = await conversation.recognize(data)
-                response['conversation_response'] = res.response
+                response['conversation_response'] = res.response.as_dict()
         elif _type == 'ha.config':
             ''' 基本配置 '''
             response['app_config'] = {
@@ -166,6 +171,7 @@ class HttpView(HomeAssistantView):
                 'ha_version': current_version,
                 'ha_app_version': manifest.version
             }
+        #print(response)
         return self.json(response)
 
     async def delete(self, request):
@@ -189,7 +195,6 @@ class HttpView(HomeAssistantView):
         ''' 授权验证 '''
         hass = request.app["hass"]
         hass_access_token = self.get_access_token(request)
-        # print(hass_access_token)
         token = await hass.auth.async_validate_access_token(hass_access_token)
         if token is None:
             return self.json_message("未授权", status_code=401)
@@ -321,7 +326,6 @@ class HttpView(HomeAssistantView):
                 state=state,
                 attributes={},
                 register_data={
-                    "device_class": "timestamp",
                     "name": "系统事件",
                 }
             )

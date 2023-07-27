@@ -151,16 +151,16 @@ class HttpView(HomeAssistantView):
                                 'reply': attrs.get('reply')
                             }
                         result = map(format_item, arr[0])
-            response['result'] = result
+            response['conversation_record'] = result
         elif _type == 'conversation.process':
             ''' 控制命令 '''
             conversation = self.hass.data.get(CONVERSATION_ASSISTANT)
             if conversation is not None:
                 res = await conversation.recognize(data)
-                response['result'] = res.response
+                response['conversation_response'] = res.response
         elif _type == 'ha.config':
             ''' 基本配置 '''
-            response['result'] = {
+            response['app_config'] = {
                 'internal_url': get_url(hass),
                 'external_url': get_url(hass, prefer_external=True),
                 'ha_version': current_version,

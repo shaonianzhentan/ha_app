@@ -46,6 +46,42 @@ blueprint:
       default: []
       selector:
         action: {}
+    miband_play:
+      name: ▶️
+      description: 小米手环 - 播放
+      default: []
+      selector:
+        action: {}
+    miband_pause:
+      name: ⏸️
+      description: 小米手环 - 暂停
+      default: []
+      selector:
+        action: {}
+    miband_prev:
+      name: ⏮️
+      description: 小米手环 - 上一个
+      default: []
+      selector:
+        action: {}
+    miband_next:
+      name: ⏭️
+      description: 小米手环 - 下一个
+      default: []
+      selector:
+        action: {}
+    miband_volume_up:
+      name: 🔊
+      description: 小米手环 - 增加音量
+      default: []
+      selector:
+        action: {}
+    miband_volume_down:
+      name: 🔉
+      description: 小米手环 - 降低音量
+      default: []
+      selector:
+        action: {}
 trigger:
 - platform: event
   event_type: ha_app
@@ -76,3 +112,21 @@ action:
   - conditions:
     - '{{ data == "volume_down" }}'
     sequence: !input volume_down
+  - conditions:
+    - '{{ data == "miband_play" }}'
+    sequence: !input miband_play
+  - conditions:
+    - '{{ data == "miband_pause" }}'
+    sequence: !input miband_pause
+  - conditions:
+    - '{{ data == "miband_prev" }}'
+    sequence: !input miband_prev
+  - conditions:
+    - '{{ data == "miband_next" }}'
+    sequence: !input miband_next
+  - conditions:
+    - '{{ data == "miband_volume_up" }}'
+    sequence: !input miband_volume_up
+  - conditions:
+    - '{{ data == "miband_volume_down" }}'
+    sequence: !input miband_volume_down

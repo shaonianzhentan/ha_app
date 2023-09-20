@@ -59,14 +59,6 @@ class HttpView(HomeAssistantView):
         # 附加数据
         data = body.get('data')
         if data is not None:
-            # 链接
-            url = data.get('url')
-            if url is not None:
-                result['url'] = url
-            # TTS
-            tts = data.get('tts')
-            if tts is not None:
-                result['tts'] = tts
             # 按钮
             actions = data.get('actions')
             if actions is not None:
@@ -107,13 +99,13 @@ class HttpView(HomeAssistantView):
         _type = body.get('type')
         data = body.get('data')
 
-        # 发送事件
-        if ['notify', 'actions', 'sms', 'button'].count(_type) > 0:
-            hass.bus.fire('ha_app', { 'type': _type, 'data': data })
-
         device = self.get_device(webhook_id)
         if device is None:
             return self.json_message("设备未注册", status_code=204)
+
+        # 发送事件
+        if ['notify', 'action', 'sms', 'button'].count(_type) > 0:
+            hass.bus.fire('ha_app', { 'type': _type, 'data': data, 'device_id': device.get('id') })
 
         if _type == 'gps': # 位置
             hass.loop.create_task(self.async_update_device(hass, webhook_url, data, device))

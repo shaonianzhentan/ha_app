@@ -1,0 +1,24 @@
+blueprint:
+  name: APP应用通知消息按钮操作
+  description: "模板内包含变量  按钮ID：{{action}}"
+  domain: automation
+  source_url: https://github.com/shaonianzhentan/ha_app/blob/main/blueprints/ha_app_actions.yaml
+  input:
+    test:
+      name: 示例
+      description: 没有匹配到应用时，执行此服务
+      default: []
+      selector:
+        action: {}
+trigger:
+- platform: event
+  event_type: ha_app
+  event_data:
+    type: actions
+action:
+- variables:
+    action: '{{ trigger.event.data.data.action }}'
+- choose:
+  - conditions:
+    - '{{ action == "test" }}'
+    sequence: !input test

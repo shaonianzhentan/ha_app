@@ -67,10 +67,10 @@ class HttpView(HomeAssistantView):
             tts = data.get('tts')
             if tts is not None:
                 result['tts'] = tts
-            # 启动项
-            start = data.get('start')
-            if start is not None:
-                result['start'] = start
+            # 按钮
+            actions = data.get('actions')
+            if actions is not None:
+                result['actions'] = actions
 
         device = self.get_device(webhook_id)
         notification_id = f'{md5(device.get("id"))}{time.strftime("%m%d%H%M%S", time.localtime())}{self.count}'
@@ -108,7 +108,7 @@ class HttpView(HomeAssistantView):
         data = body.get('data')
 
         # 发送事件
-        if ['notify', 'sms', 'button'].count(_type) > 0:
+        if ['notify', 'actions', 'sms', 'button'].count(_type) > 0:
             hass.bus.fire('ha_app', { 'type': _type, 'data': data })
 
         device = self.get_device(webhook_id)

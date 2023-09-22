@@ -36,6 +36,21 @@ NFC标签
 
 ## [使用说明](https://mp.weixin.qq.com/s/t5xaet2Kj5zbgKrasNTAyQ)
 
+通知按钮服务
+```yaml
+service: notify.mobile_app_android_设备名
+data:
+  message: 内容
+  title: 标题
+  data:
+    actions:
+      - action: action_1
+        title: 普通按钮
+      - action: action_2
+        title: 链接按钮
+        uri: https://github.com/shaonianzhentan/ha_app
+```
+
 > **Android手机权限配置**【下面是我的小米手机需要的权限】
 
 - `省电策略`设置为`无限制`

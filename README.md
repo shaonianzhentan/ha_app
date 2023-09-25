@@ -50,6 +50,15 @@ data:
         title: 链接按钮
         uri: https://github.com/shaonianzhentan/ha_app
 ```
+通知图片
+```yaml
+service: notify.mobile_app_android_设备名
+data:
+  message: 内容
+  title: 标题
+  data:
+    icon_url: https://www.home-assistant.io/images/favicon-192x192.png
+```
 
 > **Android手机权限配置**【下面是我的小米手机需要的权限】
 

@@ -64,9 +64,9 @@ class HttpView(HomeAssistantView):
             if actions is not None:
                 result['actions'] = actions
             # 图片
-            icon_url = data.get('icon_url')
-            if icon_url is not None:
-                result['icon_url'] = icon_url
+            image = data.get('image')
+            if image is not None:
+                result['image'] = image
 
         device = self.get_device(webhook_id)
         notification_id = f'{md5(device.get("id"))}{time.strftime("%m%d%H%M%S", time.localtime())}{self.count}'

@@ -57,7 +57,7 @@ data:
   message: 内容
   title: 标题
   data:
-    icon_url: https://www.home-assistant.io/images/favicon-192x192.png
+    image: https://www.home-assistant.io/images/favicon-192x192.png
 ```
 
 > **Android手机权限配置**【下面是我的小米手机需要的权限】

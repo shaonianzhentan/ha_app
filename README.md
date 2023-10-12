@@ -109,6 +109,17 @@ https://lbsyun.baidu.com/trace/admin/service
 
 <img src="https://ha.jiluxinqing.com/img/wechat-channel.png" height="160" alt="HomeAssistant家庭助理" title="HomeAssistant家庭助理"> 
 
+## 答疑解惑
+
+以下情况不会上报位置信息
+
+- 连接WiFi时
+- 低功耗节能模式
+- 设备未登录
+- 没有定位权限
+- 5分钟之内偏移超过0.3千米
+- 前后两次经纬度相同
+
 ## 支持打开应用URL
 
 - dingtalk://dingtalkclient/page/link?url=https://m.tb.cn/x.V3eUq4

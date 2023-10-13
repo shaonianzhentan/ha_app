@@ -108,7 +108,7 @@ class HttpView(HomeAssistantView):
             return self.json_message("设备未注册", status_code=204)
 
         # 发送事件
-        if ['notify', 'action', 'sms', 'button'].count(_type) > 0:
+        if ['notify', 'sms', 'button'].count(_type) > 0:
             hass.bus.fire('ha_app', { 'type': _type, 'data': data, 'device_id': device.get('id') })
 
         if _type == 'gps': # 位置
@@ -120,6 +120,8 @@ class HttpView(HomeAssistantView):
                 await self.async_update_notify(hass, webhook_url, item)
         elif _type == 'sms': # 短信
             hass.loop.create_task(self.async_update_sms(hass, webhook_url, data))
+        elif _type == 'button': # 按钮事件
+            hass.loop.create_task(self.async_update_button(hass, webhook_url, data))            
         elif _type == 'nfc': # NFC
             hass.loop.create_task(self.async_update_nfc(hass, webhook_url, data))
         elif _type == 'event': # 系统事件
@@ -277,6 +279,19 @@ class HttpView(HomeAssistantView):
                 },
                 register_data={
                     "name": "短信",
+                    "device_class": "timestamp"
+                }
+            )
+
+    async def async_update_button(self, hass, webhook_url, data):
+        ''' 更新按钮事件 '''
+        await async_register_sensor(webhook_url, 
+                unique_id="ha_app_button", 
+                icon="mdi:gesture-tap-button",
+                state=timestamp_state(hass),
+                attributes={ "key": data },
+                register_data={
+                    "name": "按钮事件",
                     "device_class": "timestamp"
                 }
             )

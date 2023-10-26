@@ -108,16 +108,15 @@ class HttpView(HomeAssistantView):
             return self.json_message("设备未注册", status_code=204)
 
         # 发送事件
-        if ['notify', 'sms', 'button'].count(_type) > 0:
+        if ['sms', 'button'].count(_type) > 0:
             hass.bus.fire('ha_app', { 'type': _type, 'data': data, 'device_id': device.get('id') })
 
         if _type == 'gps': # 位置
             hass.loop.create_task(self.async_update_device(hass, webhook_url, data, device))
-        elif _type == 'notify': # 通知                
-            hass.loop.create_task(self.async_update_notify(hass, webhook_url, data))
         elif _type == 'notify_list': # 通知列表
             for item in data:
                 await self.async_update_notify(hass, webhook_url, item)
+                hass.bus.fire('ha_app', { 'type': 'notify', 'data': item, 'device_id': device.get('id') })
         elif _type == 'sms': # 短信
             hass.loop.create_task(self.async_update_sms(hass, webhook_url, data))
         elif _type == 'button': # 按钮事件

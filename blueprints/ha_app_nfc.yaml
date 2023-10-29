@@ -6,7 +6,7 @@ blueprint:
   input:
     sensor_id:
       name: NFC传感器
-      description: 没有匹配到应用时，执行此服务
+      description: 家庭助理APP扫描NFC标签触发自动化
       selector:
         entity:
           integration: mobile_app

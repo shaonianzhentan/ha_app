@@ -10,6 +10,12 @@ blueprint:
       default: []
       selector:
         action: {}
+    sgcc_code:
+      name: 网上国网验证码
+      description: 验证码信息
+      default: []
+      selector:
+        action: {}
     express:
       name: 快递消息
       description: 菜鸟驿站、兔喜生活、快递超市、百世快递、微快递、申通快递、菜鸟智能柜
@@ -38,6 +44,9 @@ action:
     text: '{{ trigger.event.data.data.content }}'
     from: '{{ trigger.event.data.data.from }}'
 - choose:
+  - conditions:
+    - '{{ "网上国网验证码" in text }}'
+    sequence: !input sgcc_code
   - conditions:
     - '{{ "菜鸟驿站" in text }}'
     - '{{ "兔喜生活" in text }}'

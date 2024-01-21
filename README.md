@@ -36,7 +36,10 @@ NFC标签
 
 ## [使用说明](https://mp.weixin.qq.com/s/t5xaet2Kj5zbgKrasNTAyQ)
 
-通知按钮服务
+
+### 通知服务
+
+按钮通知
 ```yaml
 service: notify.mobile_app_android_设备名
 data:
@@ -50,7 +53,7 @@ data:
         title: 链接按钮
         uri: https://github.com/shaonianzhentan/ha_app
 ```
-通知图片
+图片通知
 ```yaml
 service: notify.mobile_app_android_设备名
 data:
@@ -59,6 +62,22 @@ data:
   data:
     image: https://www.home-assistant.io/images/favicon-192x192.png
 ```
+
+### 控制服务
+
+媒体控制
+```yaml
+service: notify.mobile_app_android_设备名
+data:
+  message: ha_app_control
+  data:
+    type: media_play_pause
+```
+- media_next_track: 下一曲
+- media_previous_track: 上一曲
+- media_play_pause: 播放/暂停
+- media_pause: 暂停
+- media_play: 播放
 
 > **Android手机权限配置**【下面是我的小米手机需要的权限】
 

@@ -1,4 +1,8 @@
-import time, json, aiohttp, logging, datetime
+import time
+import json
+import aiohttp
+import logging
+import datetime
 from homeassistant.components.http import HomeAssistantView
 
 from homeassistant.util.json import load_json
@@ -10,6 +14,7 @@ from .utils import call_service, async_http_post, async_register_sensor, \
     get_storage_dir, timestamp_state, md5, get_notifications
 from .const import CONVERSATION_ASSISTANT
 _LOGGER = logging.getLogger(__name__)
+
 
 class HttpView(HomeAssistantView):
 
@@ -36,20 +41,27 @@ class HttpView(HomeAssistantView):
                     }
         return self.device.get(webhook_id)
 
-
     async def post(self, request):
         ''' 保留通知消息 '''
         hass = request.app["hass"]
 
         body = await request.json()
         _LOGGER.debug(body)
-        
+
         push_token = body.get('push_token')
         title = body.get('title')
         message = body.get('message')
+        data = body.get('data')
 
         registration_info = body.get('registration_info')
         webhook_id = registration_info.get('webhook_id')
+        device = self.get_device(webhook_id)
+        device_id = device.get("id")
+
+        # 特殊情况
+        if message == 'ha_app_control':
+            hass.bus.fire("ha_app_control", {"dev_id": device_id, **data})
+            return self.json_message("触发成功", status_code=201)
 
         result = {
             'title': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()) if title is None else title,
@@ -57,7 +69,6 @@ class HttpView(HomeAssistantView):
         }
 
         # 附加数据
-        data = body.get('data')
         if data is not None:
             # 按钮
             actions = data.get('actions')
@@ -68,17 +79,16 @@ class HttpView(HomeAssistantView):
             if image is not None:
                 result['image'] = image
 
-        device = self.get_device(webhook_id)
-        notification_id = f'{md5(device.get("id"))}{time.strftime("%m%d%H%M%S", time.localtime())}{self.count}'
+        notification_id = f'{md5(device_id)}{time.strftime("%m%d%H%M%S", time.localtime())}{self.count}'
         self.count = self.count + 1
         if self.count > 50:
             self.count = 0
 
         call_service(hass, 'persistent_notification.create', {
-                    'title': message,
-                    'message': json.dumps(result, indent=2, ensure_ascii=False),
-                    'notification_id': notification_id
-                })
+            'title': message,
+            'message': json.dumps(result, indent=2, ensure_ascii=False),
+            'notification_id': notification_id
+        })
         return self.json_message("推送成功", status_code=201)
 
     async def put(self, request):
@@ -87,11 +97,11 @@ class HttpView(HomeAssistantView):
         if result is not None:
             return result
 
-        # 上报GPS位置        
+        # 上报GPS位置
         hass = request.app["hass"]
         body = await request.json()
         _LOGGER.debug(body)
-        
+
         webhook_id = body.get('webhook_id')
         if webhook_id is None:
             return self.json_message("参数异常", status_code=204)
@@ -109,22 +119,29 @@ class HttpView(HomeAssistantView):
 
         # 发送事件
         if ['sms', 'button'].count(_type) > 0:
-            hass.bus.fire('ha_app', { 'type': _type, 'data': data, 'device_id': device.get('id') })
+            hass.bus.fire(
+                'ha_app', {'type': _type, 'data': data, 'device_id': device.get('id')})
 
-        if _type == 'gps': # 位置
-            hass.loop.create_task(self.async_update_device(hass, webhook_url, data, device))
-        elif _type == 'notify_list': # 通知列表
+        if _type == 'gps':  # 位置
+            hass.loop.create_task(self.async_update_device(
+                hass, webhook_url, data, device))
+        elif _type == 'notify_list':  # 通知列表
             for item in data:
                 await self.async_update_notify(hass, webhook_url, item)
-                hass.bus.fire('ha_app', { 'type': 'notify', 'data': item, 'device_id': device.get('id') })
-        elif _type == 'sms': # 短信
-            hass.loop.create_task(self.async_update_sms(hass, webhook_url, data))
-        elif _type == 'button': # 按钮事件
-            hass.loop.create_task(self.async_update_button(hass, webhook_url, data))            
-        elif _type == 'nfc': # NFC
-            hass.loop.create_task(self.async_update_nfc(hass, webhook_url, data))
-        elif _type == 'event': # 系统事件
-            hass.loop.create_task(self.async_update_event(hass, webhook_url, data))
+                hass.bus.fire(
+                    'ha_app', {'type': 'notify', 'data': item, 'device_id': device.get('id')})
+        elif _type == 'sms':  # 短信
+            hass.loop.create_task(
+                self.async_update_sms(hass, webhook_url, data))
+        elif _type == 'button':  # 按钮事件
+            hass.loop.create_task(
+                self.async_update_button(hass, webhook_url, data))
+        elif _type == 'nfc':  # NFC
+            hass.loop.create_task(
+                self.async_update_nfc(hass, webhook_url, data))
+        elif _type == 'event':  # 系统事件
+            hass.loop.create_task(
+                self.async_update_event(hass, webhook_url, data))
 
         # 使用新版通知
         notifications = get_notifications(hass, device.get('id'))
@@ -155,7 +172,7 @@ class HttpView(HomeAssistantView):
                                 'reply': attrs.get('reply'),
                                 'ctime':  datetime.datetime.fromisoformat(state['last_changed']).strftime('%Y-%m-%d %H:%M:%S')
                             })
-                        result.sort(reverse=True, key=lambda x:x['ctime'])
+                        result.sort(reverse=True, key=lambda x: x['ctime'])
             response['conversation_record'] = result
         elif _type == 'conversation.process':
             ''' 控制命令 '''
@@ -171,7 +188,7 @@ class HttpView(HomeAssistantView):
                 'ha_version': current_version,
                 'ha_app_version': manifest.version
             }
-        #print(response)
+        # print(response)
         return self.json(response)
 
     async def delete(self, request):
@@ -184,7 +201,8 @@ class HttpView(HomeAssistantView):
         query = request.query
         ids = query.get('id').split(',')
         for notification_id in ids:
-            call_service(hass, 'persistent_notification.dismiss', { 'notification_id': notification_id })
+            call_service(hass, 'persistent_notification.dismiss',
+                         {'notification_id': notification_id})
         return self.json_message("删除通知提醒", status_code=200)
 
     def get_access_token(self, request):
@@ -252,95 +270,95 @@ class HttpView(HomeAssistantView):
             icon = "mdi:battery-20"
         elif battery <= 10:
             icon = "mdi:battery-10"
-        
-        await async_register_sensor(webhook_url, 
-                unique_id="battery_level", 
-                icon=icon,
-                state=battery,
-                attributes={},
-                register_data={
-                    "state_class": "measurement",
-                    "device_class": "battery",
-                    "unit_of_measurement": "%",
-                    "name": "电量",
-                }
-            )
+
+        await async_register_sensor(webhook_url,
+                                    unique_id="battery_level",
+                                    icon=icon,
+                                    state=battery,
+                                    attributes={},
+                                    register_data={
+                                        "state_class": "measurement",
+                                        "device_class": "battery",
+                                        "unit_of_measurement": "%",
+                                        "name": "电量",
+                                    }
+                                    )
 
     async def async_update_sms(self, hass, webhook_url, data):
         ''' 更新短信 '''
-        await async_register_sensor(webhook_url, 
-                unique_id="short_message", 
-                icon="mdi:message",
-                state=timestamp_state(hass),
-                attributes={
-                    "from": str(data['from']),
-                    "text": data['content']
-                },
-                register_data={
-                    "name": "短信",
-                    "device_class": "timestamp"
-                }
-            )
+        await async_register_sensor(webhook_url,
+                                    unique_id="short_message",
+                                    icon="mdi:message",
+                                    state=timestamp_state(hass),
+                                    attributes={
+                                        "from": str(data['from']),
+                                        "text": data['content']
+                                    },
+                                    register_data={
+                                        "name": "短信",
+                                        "device_class": "timestamp"
+                                    }
+                                    )
 
     async def async_update_button(self, hass, webhook_url, data):
         ''' 更新按钮事件 '''
-        await async_register_sensor(webhook_url, 
-                unique_id="ha_app_button", 
-                icon="mdi:gesture-tap-button",
-                state=timestamp_state(hass),
-                attributes={ "key": data },
-                register_data={
-                    "name": "按钮事件",
-                    "device_class": "timestamp"
-                }
-            )
+        await async_register_sensor(webhook_url,
+                                    unique_id="ha_app_button",
+                                    icon="mdi:gesture-tap-button",
+                                    state=timestamp_state(hass),
+                                    attributes={"key": data},
+                                    register_data={
+                                        "name": "按钮事件",
+                                        "device_class": "timestamp"
+                                    }
+                                    )
 
     async def async_update_nfc(self, hass, webhook_url, data):
         ''' 更新NFC '''
-        await async_register_sensor(webhook_url, 
-                unique_id="scan_nfc", 
-                icon="mdi:nfc-variant",
-                state=timestamp_state(hass),
-                attributes={
-                    "id": data['id']
-                },
-                register_data={
-                    "name": "NFC",
-                    "device_class": "timestamp"
-                }
-            )
+        await async_register_sensor(webhook_url,
+                                    unique_id="scan_nfc",
+                                    icon="mdi:nfc-variant",
+                                    state=timestamp_state(hass),
+                                    attributes={
+                                        "id": data['id']
+                                    },
+                                    register_data={
+                                        "name": "NFC",
+                                        "device_class": "timestamp"
+                                    }
+                                    )
 
     async def async_update_notify(self, hass, webhook_url, data):
         ''' 更新通知 '''
-        await async_register_sensor(webhook_url, 
-                unique_id="application_notification", 
-                icon="mdi:cellphone-message",
-                state=timestamp_state(hass),
-                attributes={
-                    "title": data['title'],
-                    "content": data['content'],
-                    "text": data['text'],
-                    "package": data['package']
-                },
-                register_data={
-                    "device_class": "timestamp",
-                    "name": "通知",
-                }
-            )
+        await async_register_sensor(webhook_url,
+                                    unique_id="application_notification",
+                                    icon="mdi:cellphone-message",
+                                    state=timestamp_state(hass),
+                                    attributes={
+                                        "title": data['title'],
+                                        "content": data['content'],
+                                        "text": data['text'],
+                                        "package": data['package']
+                                    },
+                                    register_data={
+                                        "device_class": "timestamp",
+                                        "name": "通知",
+                                    }
+                                    )
 
     async def async_update_event(self, hass, webhook_url, data):
         ''' 系统事件 '''
         battery = data.get('battery')
         state = data.get('text')
 
-        await async_register_sensor(webhook_url, 
-                unique_id="system_event", 
-                icon="mdi:cellphone-information",
-                state=state,
-                attributes={},
-                register_data={
-                    "name": "系统事件",
-                }
-            )
+        await async_register_sensor(webhook_url,
+                                    unique_id="system_event",
+                                    icon="mdi:cellphone-information",
+                                    state=state,
+                                    attributes={},
+                                    register_data={
+                                        "name": "系统事件",
+                                    }
+                                    )
         # 更新手机电量
         await self.async_update_battery(hass, webhook_url, battery)

@@ -65,7 +65,7 @@ data:
 
 ### 控制服务
 
-媒体控制
+**媒体控制**
 ```yaml
 service: notify.mobile_app_android_设备名
 data:
@@ -78,6 +78,17 @@ data:
 - media_play_pause: 播放/暂停
 - media_pause: 暂停
 - media_play: 播放
+
+
+**TTS语音播放**
+```yaml
+service: notify.mobile_app_android_设备名
+data:
+  message: ha_app_control
+  data:
+    type: tts
+    data: 播报的文本内容
+```
 
 > **Android手机权限配置**【下面是我的小米手机需要的权限】
 

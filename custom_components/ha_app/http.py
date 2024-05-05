@@ -277,7 +277,6 @@ class HttpView(HomeAssistantView):
                                     state=battery,
                                     attributes={},
                                     register_data={
-                                        "state_class": "measurement",
                                         "device_class": "battery",
                                         "unit_of_measurement": "%",
                                         "name": "电量",

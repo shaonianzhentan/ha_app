@@ -213,7 +213,7 @@ class HttpView(HomeAssistantView):
         ''' 授权验证 '''
         hass = request.app["hass"]
         hass_access_token = self.get_access_token(request)
-        token = await hass.auth.async_validate_access_token(hass_access_token)
+        token = hass.auth.async_validate_access_token(hass_access_token)
         if token is None:
             return self.json_message("未授权", status_code=401)
 

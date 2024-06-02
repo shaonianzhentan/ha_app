@@ -142,6 +142,8 @@ class HttpView(HomeAssistantView):
         elif _type == 'event':  # 系统事件
             hass.loop.create_task(
                 self.async_update_event(hass, webhook_url, data))
+        elif _type == 'notification_action':  # 通知按钮操作
+            hass.bus.fire('mobile_app_notification_action', {'action': data})
 
         # 使用新版通知
         notifications = get_notifications(hass, device.get('id'))

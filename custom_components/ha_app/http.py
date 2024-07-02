@@ -12,7 +12,6 @@ from homeassistant.const import __version__ as current_version
 from .manifest import manifest
 from .utils import call_service, async_http_post, async_register_sensor, \
     get_storage_dir, timestamp_state, md5, get_notifications
-from .const import CONVERSATION_ASSISTANT
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -149,39 +148,17 @@ class HttpView(HomeAssistantView):
         response = {
             'notify': notifications
         }
-        if _type == 'conversation.list':
-            ''' 对话记录 '''
-            headers = {
-                'Authorization': request.headers.get('Authorization')
+        if _type == 'conversation.agent':
+            # 对话代理
+            pipeline_data = hass.data['assist_pipeline']
+            storage_collection = pipeline_data.pipeline_store
+            # async_set_preferred_item(item_id)
+            response['conversation_agents'] = {
+                "pipelines": storage_collection.async_items(),
+                "preferred_pipeline": storage_collection.async_get_preferred_item()
             }
-            result = []
-            async with aiohttp.ClientSession() as session:
-                today = datetime.date.today()
-                yesterday = today - datetime.timedelta(days=2)
-                tomorrow = today + datetime.timedelta(days=1)
-                async with session.get(f'{base_url}/api/history/period/{yesterday.strftime("%Y-%m-%d")}T00:00:00.000Z', params={
-                    'filter_entity_id': 'conversation.voice',
-                    'end_time': f'{tomorrow.strftime("%Y-%m-%d")}T00:00:00.000Z'
-                }, headers=headers) as res:
-                    arr = await res.json()
-                    if len(arr) > 0:
-                        for state in arr[0]:
-                            attrs = state['attributes']
-                            result.append({
-                                'command': state['state'],
-                                'reply': attrs.get('reply'),
-                                'ctime':  datetime.datetime.fromisoformat(state['last_changed']).strftime('%Y-%m-%d %H:%M:%S')
-                            })
-                        result.sort(reverse=True, key=lambda x: x['ctime'])
-            response['conversation_record'] = result
-        elif _type == 'conversation.process':
-            ''' 控制命令 '''
-            conversation = hass.data.get(CONVERSATION_ASSISTANT)
-            if conversation is not None:
-                res = await conversation.recognize(data)
-                response['conversation_response'] = res.response.as_dict()
         elif _type == 'ha.config':
-            ''' 基本配置 '''
+            # 基本配置
             response['app_config'] = {
                 'internal_url': get_url(hass),
                 'external_url': get_url(hass, prefer_external=True),

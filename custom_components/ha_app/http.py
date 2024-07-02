@@ -153,10 +153,16 @@ class HttpView(HomeAssistantView):
             pipeline_data = hass.data['assist_pipeline']
             storage_collection = pipeline_data.pipeline_store
             # async_set_preferred_item(item_id)
-            response['conversation_agents'] = {
+            response['conversation_agent'] = {
                 "pipelines": storage_collection.async_items(),
                 "preferred_pipeline": storage_collection.async_get_preferred_item()
             }
+        elif _type == 'conversation.process':
+            # 控制命令
+            response['conversation_response'] = await async_http_post(webhook_url, {
+                "type": "conversation_process",
+                "data": data
+            })
         elif _type == 'ha.config':
             # 基本配置
             response['app_config'] = {

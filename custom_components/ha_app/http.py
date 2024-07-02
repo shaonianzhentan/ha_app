@@ -148,7 +148,7 @@ class HttpView(HomeAssistantView):
         response = {
             'notify': notifications
         }
-        if _type == 'conversation.agent':
+        if _type == 'ha.agent':
             # 对话代理
             pipeline_data = hass.data['assist_pipeline']
             storage_collection = pipeline_data.pipeline_store
@@ -157,9 +157,6 @@ class HttpView(HomeAssistantView):
                 "pipelines": storage_collection.async_items(),
                 "preferred_pipeline": storage_collection.async_get_preferred_item()
             }
-        elif _type == 'webhook':
-            # webhook
-            response['data'] = await async_http_post(webhook_url, data)
         elif _type == 'ha.config':
             # 基本配置
             response['data'] = {
@@ -168,6 +165,9 @@ class HttpView(HomeAssistantView):
                 'ha_version': current_version,
                 'ha_app_version': manifest.version
             }
+        elif _type == 'webhook':
+            # webhook
+            response['data'] = await async_http_post(webhook_url, data)
         # print(response)
         return self.json(response)
 

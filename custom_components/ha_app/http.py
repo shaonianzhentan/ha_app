@@ -157,6 +157,8 @@ class HttpView(HomeAssistantView):
                 "pipelines": storage_collection.async_items(),
                 "preferred_pipeline": storage_collection.async_get_preferred_item()
             }
+        elif _type == 'conversation.process':
+            response['data'] = await async_http_post(f"{base_url}/api/conversation/process", data)
         elif _type == 'ha.config':
             # 基本配置
             response['data'] = {

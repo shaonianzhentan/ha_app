@@ -4,6 +4,14 @@ blueprint:
   domain: automation
   source_url: https://github.com/shaonianzhentan/ha_app/blob/main/blueprints/ha_app_notify.yaml
   input:
+    sensor_id:
+      name: 通知
+      description: 家庭助理APP通知转发      
+      selector:
+        entity:
+          integration: mobile_app
+          domain: sensor
+          device_class: timestamp
     other:
       name: 其它应用
       description: 没有匹配到应用时，执行此服务
@@ -41,16 +49,14 @@ blueprint:
       selector:
         action: {}
 trigger:
-- platform: event
-  event_type: ha_app
-  event_data:
-    type: notify
+- platform: state
+  entity_id: !input sensor_id
 action:
 - variables:
-    package: '{{ trigger.event.data.data.package }}'
-    title: '{{ trigger.event.data.data.title }}'
-    content: '{{ trigger.event.data.data.content }}'
-    text: '{{ trigger.event.data.data.text }}'
+    package: '{{ trigger.to_state.attributes.package }}'
+    title: '{{ trigger.to_state.attributes.title }}'
+    content: '{{ trigger.to_state.attributes.content }}'
+    text: '{{ trigger.to_state.attributes.text }}'
 - choose:
   - conditions:
     - '{{ package == "com.xiaomi.smarthome" }}'

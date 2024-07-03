@@ -63,7 +63,7 @@ data:
     image: https://www.home-assistant.io/images/favicon-192x192.png
 ```
 
-### 控制服务
+### 控制服务（测试中）
 
 **媒体控制**
 ```yaml
@@ -149,7 +149,3 @@ https://lbsyun.baidu.com/trace/admin/service
 - 没有定位权限
 - 5分钟之内偏移超过0.3千米
 - 前后两次经纬度相同
-
-## 支持打开应用URL
-
-- dingtalk://dingtalkclient/page/link?url=https://m.tb.cn/x.V3eUq4

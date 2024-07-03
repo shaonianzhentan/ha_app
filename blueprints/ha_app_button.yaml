@@ -4,6 +4,14 @@ blueprint:
   domain: automation
   source_url: https://github.com/shaonianzhentan/ha_app/blob/main/blueprints/ha_app_button.yaml
   input:
+    sensor_id:
+      name: 按钮事件
+      description: 家庭助理APP点击预设按钮触发自动化
+      selector:
+        entity:
+          integration: mobile_app
+          domain: sensor
+          device_class: timestamp
     up:
       name: 👆
       description: 上
@@ -83,13 +91,11 @@ blueprint:
       selector:
         action: {}
 trigger:
-- platform: event
-  event_type: ha_app
-  event_data:
-    type: button
+- platform: state
+  entity_id: !input sensor_id
 action:
 - variables:
-    data: '{{ trigger.event.data.data }}'
+    data: '{{ trigger.to_state.attributes.key }}'
 - choose:
   - conditions:
     - '{{ data == "up" }}'

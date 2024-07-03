@@ -4,7 +4,7 @@ import aiohttp
 import logging
 import datetime
 from homeassistant.components.http import HomeAssistantView
-
+from homeassistant.components.conversation.agent_manager import async_converse
 from homeassistant.util.json import load_json
 from homeassistant.helpers.network import get_url
 from homeassistant.const import __version__ as current_version
@@ -116,19 +116,12 @@ class HttpView(HomeAssistantView):
         if device is None:
             return self.json_message("设备未注册", status_code=204)
 
-        # 发送事件
-        if ['sms', 'button'].count(_type) > 0:
-            hass.bus.fire(
-                'ha_app', {'type': _type, 'data': data, 'device_id': device.get('id')})
-
         if _type == 'gps':  # 位置
             hass.loop.create_task(self.async_update_device(
                 hass, webhook_url, data, device))
         elif _type == 'notify_list':  # 通知列表
             for item in data:
                 await self.async_update_notify(hass, webhook_url, item)
-                hass.bus.fire(
-                    'ha_app', {'type': 'notify', 'data': item, 'device_id': device.get('id')})
         elif _type == 'sms':  # 短信
             hass.loop.create_task(
                 self.async_update_sms(hass, webhook_url, data))
@@ -158,7 +151,16 @@ class HttpView(HomeAssistantView):
                 "preferred_pipeline": storage_collection.async_get_preferred_item()
             }
         elif _type == 'conversation.process':
-            response['data'] = await async_http_post(f"{base_url}/api/conversation/process", data)
+            # 语音识别
+            result = await async_converse(
+                hass=hass,
+                text=data["text"],
+                conversation_id=data.get("conversation_id"),
+                context=self.context(request),
+                language=data.get("language"),
+                agent_id=data.get("agent_id", "homeassistant"),
+            )
+            response['data'] = result.as_dict()
         elif _type == 'ha.config':
             # 基本配置
             response['data'] = {

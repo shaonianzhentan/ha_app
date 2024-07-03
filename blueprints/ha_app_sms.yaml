@@ -18,8 +18,8 @@ blueprint:
       default: 
         - service: notify.persistent_notification
           data:
-            message: {{text}}
-            title: {{from}}
+            message: 内容：{{text}}
+            title: 号码：{{from}}
       selector:
         action: {}
     sgcc_code:

@@ -5,7 +5,7 @@ blueprint:
   source_url: https://github.com/shaonianzhentan/ha_app/blob/main/blueprints/ha_app_notify.yaml
   input:
     sensor_id:
-      name: Android通知
+      name: 'Android 通知'
       description: 家庭助理APP通知转发      
       selector:
         entity:
@@ -77,6 +77,6 @@ action:
   - conditions:
     - '{{ package == "com.byd.aeri.caranywhere" }}'
     sequence: !input com_byd_aeri_caranywhere
-- service: script.turn_on
-  target:
-    entity_id: !input custom_action
+- choose:
+    - conditions: []
+      sequence: !input custom_action

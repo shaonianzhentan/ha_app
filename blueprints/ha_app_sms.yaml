@@ -5,7 +5,7 @@ blueprint:
   source_url: https://github.com/shaonianzhentan/ha_app/blob/main/blueprints/ha_app_sms.yaml
   input:
     sensor_id:
-      name: Android短信
+      name: 'Android 短信'
       description: 家庭助理APP短信转发
       selector:
         entity:
@@ -82,6 +82,6 @@ action:
     - '{{ "广发银行" in text }}'
     - '{{ "湖北农信" in text }}'
     sequence: !input bank
-- service: script.turn_on
-  target:
-    entity_id: !input custom_action
+- choose:
+  - conditions: []
+    sequence: !input custom_action

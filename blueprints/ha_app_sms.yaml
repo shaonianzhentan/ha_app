@@ -18,8 +18,8 @@ blueprint:
       default: 
         - service: notify.persistent_notification
           data:
-            message: 内容：{{text}}
-            title: 号码：{{from}}
+            message: "{{text}}"
+            title: "{{from}}"
       selector:
         action: {}
     sgcc_code:
@@ -51,7 +51,7 @@ trigger:
   entity_id: !input sensor_id
 action:
 - variables:
-    text: '{{ trigger.to_state.attributes.content }}'
+    text: '{{ trigger.to_state.attributes.text }}'
     from: '{{ trigger.to_state.attributes.from }}'
 - choose:
   - conditions:

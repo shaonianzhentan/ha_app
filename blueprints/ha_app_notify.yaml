@@ -18,8 +18,11 @@ blueprint:
       default: 
         - service: notify.persistent_notification
           data:
-            message: 内容：{{content}} 短文本：{{text}}  应用包：{{package}}
-            title: 标题：{{title}}
+            message: |
+                内容：{{content}}
+                短文本：{{text}}  
+                应用包：{{package}}
+            title: "{{title}}"
       selector:
         action: {}
     com_xiaomi_smarthome:
@@ -78,5 +81,5 @@ action:
     - '{{ package == "com.byd.aeri.caranywhere" }}'
     sequence: !input com_byd_aeri_caranywhere
 - choose:
-    - conditions: []
-      sequence: !input custom_action
+  - conditions: []
+    sequence: !input custom_action

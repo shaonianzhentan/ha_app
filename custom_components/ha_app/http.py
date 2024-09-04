@@ -40,6 +40,12 @@ class HttpView(HomeAssistantView):
                     }
         return self.device.get(webhook_id)
 
+    async def get(self, request):
+        query = await request.query
+        ver = query.get('ver')
+        # 判断当前APP版本是否支持本插件
+        return self.json_message("ok", status_code=200)
+
     async def post(self, request):
         ''' 保留通知消息 '''
         hass = request.app["hass"]

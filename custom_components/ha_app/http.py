@@ -1,6 +1,8 @@
 import time
 import json
+import aiohttp
 import logging
+import datetime
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.components.conversation.agent_manager import async_converse
 from homeassistant.util.json import load_json
@@ -38,6 +40,10 @@ class HttpView(HomeAssistantView):
                     }
         return self.device.get(webhook_id)
 
+    async def async_get_device(self, hass, webhook_id):
+        return await hass.async_add_executor_job(self.get_device, webhook_id)
+    
+
     async def get(self, request):
         query = request.query
         ver = query.get('ver')
@@ -61,7 +67,8 @@ class HttpView(HomeAssistantView):
 
         registration_info = body.get('registration_info')
         webhook_id = registration_info.get('webhook_id')
-        device = self.get_device(webhook_id)
+        device = await self.async_get_device(hass, webhook_id)
+        
         device_id = device.get("id")
 
         # 特殊情况
@@ -119,7 +126,7 @@ class HttpView(HomeAssistantView):
         _type = body.get('type')
         data = body.get('data')
 
-        device = self.get_device(webhook_id)
+        device = await self.async_get_device(hass, webhook_id)
         if device is None:
             return self.json_message("设备未注册", status_code=204)
 

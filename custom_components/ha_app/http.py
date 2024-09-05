@@ -1,8 +1,6 @@
 import time
 import json
-import aiohttp
 import logging
-import datetime
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.components.conversation.agent_manager import async_converse
 from homeassistant.util.json import load_json
@@ -45,7 +43,7 @@ class HttpView(HomeAssistantView):
         ver = query.get('ver')
         # 判断当前APP版本是否支持本插件
         result = ''
-        if ver < '2.2':
+        if ver is not None and ver < '2.2':
             result = '请将APP升级到最新版本'
         return self.json_message(result, status_code=200)
 

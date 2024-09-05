@@ -41,10 +41,13 @@ class HttpView(HomeAssistantView):
         return self.device.get(webhook_id)
 
     async def get(self, request):
-        query = await request.query
+        query = request.query
         ver = query.get('ver')
         # 判断当前APP版本是否支持本插件
-        return self.json_message("ok", status_code=200)
+        result = ''
+        if ver < '2.2':
+            result = '请将APP升级到最新版本'
+        return self.json_message(result, status_code=200)
 
     async def post(self, request):
         ''' 保留通知消息 '''
@@ -338,14 +341,19 @@ class HttpView(HomeAssistantView):
     async def async_update_event(self, hass, webhook_url, data):
         ''' 系统事件 '''
         battery = data.get('battery')
-        state = data.get('text')
+        text = data.get('text')
+        source = data.get('source')
 
         await async_register_sensor(webhook_url,
                                     unique_id="system_event",
                                     icon="mdi:cellphone-information",
-                                    state=state,
-                                    attributes={},
+                                    state=timestamp_state(hass),
+                                    attributes={
+                                        'text': text,
+                                        'source': source
+                                    },
                                     register_data={
+                                        "device_class": "timestamp",
                                         "name": "系统事件",
                                     }
                                     )

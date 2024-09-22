@@ -1,0 +1,47 @@
+blueprint:
+  name: Android系统媒体控制
+  description: >-
+    模拟按键，控制媒体播放器的操作
+  domain: script
+  source_url: https://github.com/shaonianzhentan/ha_app/blob/main/blueprints/script/system_media.yaml
+  author: shaonianzhentan
+  input:
+    notify_device:
+      name: 通知设备
+      description: 需要在【家庭助理Android应用程序】中开启手机控制才能使用此功能
+      selector:
+        device:
+          filter:
+            integration: mobile_app
+
+sequence:
+  - alias: "发送控制指令"
+    domain: mobile_app
+    type: notify
+    device_id: !input notify_device
+    title: "system_media"
+    message: "{{message}}"
+
+fields:
+  message:
+    name: "操作"
+    description: "对控制设备的一些操作"
+    default: "play_pause"
+    required: True
+    selector:
+      select:
+        options:
+          - label: 上一个
+            value: previous
+          - label: 下一个
+            value: next
+          - label: 播放/暂停
+            value: play_pause
+          - label: 播放
+            value: play
+          - label: 暂停
+            value: pause
+          - label: 音量调高
+            value: volume_up
+          - label: 音量调低
+            value: volume_down

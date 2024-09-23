@@ -26,7 +26,6 @@ fields:
   message:
     name: "操作"
     description: "对控制设备的一些操作"
-    default: "play_pause"
     required: True
     selector:
       select:

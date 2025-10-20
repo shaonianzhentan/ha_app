@@ -1,14 +1,12 @@
-import aiohttp, json, os, pytz, hashlib
-from homeassistant.helpers.storage import STORAGE_DIR
+import aiohttp, json, pytz, hashlib
 from datetime import datetime
 from homeassistant.components.persistent_notification import _async_get_or_create_notifications
 
-
-def get_notifications(hass, device_id):
+def get_notifications(hass, webhook_id):
     # 使用新版通知
     _list = []
     notifications = _async_get_or_create_notifications(hass)
-    notification_id = md5(device_id)
+    notification_id = md5(webhook_id)
     for key in notifications:
         if key.startswith(notification_id):
             notification = notifications[key]
@@ -22,10 +20,6 @@ def call_service(hass, service_name, service_data):
     ''' 调用服务 '''
     arr = service_name.split('.')
     hass.loop.create_task(hass.services.async_call(arr[0], arr[1], service_data))
-
-def get_storage_dir(file_name):
-    ''' 存储目录 '''
-    return os.path.abspath(f'{STORAGE_DIR}/{file_name}')
 
 def md5(data):
     return hashlib.md5(data.encode('utf-8')).hexdigest()

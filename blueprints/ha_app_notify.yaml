@@ -4,10 +4,25 @@ blueprint:
   domain: automation
   source_url: https://github.com/shaonianzhentan/ha_app/blob/main/blueprints/ha_app_notify.yaml
   input:
-    other:
-      name: 其它应用
-      description: 没有匹配到应用时，执行此服务
-      default: []
+    sensor_id:
+      name: 'Android 通知'
+      description: 家庭助理APP通知转发      
+      selector:
+        entity:
+          integration: mobile_app
+          domain: sensor
+          device_class: timestamp
+    custom_action:
+      name: 所有应用
+      description: 接收到应用通知消息时，执行此服务
+      default: 
+        - service: notify.persistent_notification
+          data:
+            message: |
+                内容：{{content}}
+                短文本：{{text}}  
+                应用包：{{package}}
+            title: "{{title}}"
       selector:
         action: {}
     com_xiaomi_smarthome:
@@ -41,16 +56,14 @@ blueprint:
       selector:
         action: {}
 trigger:
-- platform: event
-  event_type: ha_app
-  event_data:
-    type: notify
+- platform: state
+  entity_id: !input sensor_id
 action:
 - variables:
-    package: '{{ trigger.event.data.data.package }}'
-    title: '{{ trigger.event.data.data.title }}'
-    content: '{{ trigger.event.data.data.content }}'
-    text: '{{ trigger.event.data.data.text }}'
+    package: '{{ trigger.to_state.attributes.package }}'
+    title: '{{ trigger.to_state.attributes.title }}'
+    content: '{{ trigger.to_state.attributes.content }}'
+    text: '{{ trigger.to_state.attributes.text }}'
 - choose:
   - conditions:
     - '{{ package == "com.xiaomi.smarthome" }}'
@@ -67,6 +80,6 @@ action:
   - conditions:
     - '{{ package == "com.byd.aeri.caranywhere" }}'
     sequence: !input com_byd_aeri_caranywhere
-  - conditions:
-    - '{{ package != "" }}'
-    sequence: !input other
+- choose:
+  - conditions: []
+    sequence: !input custom_action

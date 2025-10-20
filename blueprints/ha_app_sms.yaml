@@ -4,10 +4,22 @@ blueprint:
   domain: automation
   source_url: https://github.com/shaonianzhentan/ha_app/blob/main/blueprints/ha_app_sms.yaml
   input:
-    other:
-      name: 其它消息
-      description: 没有匹配到定义消息时，执行此服务
-      default: []
+    sensor_id:
+      name: 'Android 短信'
+      description: 家庭助理APP短信转发
+      selector:
+        entity:
+          integration: mobile_app
+          domain: sensor
+          device_class: timestamp
+    custom_action:
+      name: 所有消息
+      description: 收到短信时，执行此服务
+      default: 
+        - service: notify.persistent_notification
+          data:
+            message: "{{text}}"
+            title: "{{from}}"
       selector:
         action: {}
     sgcc_code:
@@ -35,14 +47,12 @@ blueprint:
       selector:
         action: {}
 trigger:
-- platform: event
-  event_type: ha_app
-  event_data:
-    type: sms
+- platform: state
+  entity_id: !input sensor_id
 action:
 - variables:
-    text: '{{ trigger.event.data.data.content }}'
-    from: '{{ trigger.event.data.data.from }}'
+    text: '{{ trigger.to_state.attributes.text }}'
+    from: '{{ trigger.to_state.attributes.from }}'
 - choose:
   - conditions:
     - '{{ "网上国网验证码" in text }}'
@@ -72,6 +82,6 @@ action:
     - '{{ "广发银行" in text }}'
     - '{{ "湖北农信" in text }}'
     sequence: !input bank
-  - conditions:
-    - '{{ text != "" }}'
-    sequence: !input other
+- choose:
+  - conditions: []
+    sequence: !input custom_action

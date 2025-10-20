@@ -1,1 +1,1 @@
-CONVERSATION_ASSISTANT = "conversation_assistant"
+DOMAIN = 'haapp'

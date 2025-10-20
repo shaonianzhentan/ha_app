@@ -98,7 +98,7 @@ class HttpView(HomeAssistantView):
         if _type == 'gps':  # 位置
             hass.loop.create_task(
                 self.async_update_device(hass, webhook_url, data))
-        elif _type == 'notify_list':  # 通知列表
+        elif _type == 'notify':  # 通知列表
             for item in data:
                 await self.async_update_notify(hass, webhook_url, item)
         elif _type == 'sms':  # 短信

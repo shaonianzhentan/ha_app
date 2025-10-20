@@ -1,1 +1,1 @@
-DOMAIN = 'haapp'
+DOMAIN = 'ha_app'

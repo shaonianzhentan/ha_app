@@ -63,33 +63,6 @@ data:
     image: https://www.home-assistant.io/images/favicon-192x192.png
 ```
 
-### 控制服务（测试中）
-
-**媒体控制**
-```yaml
-service: notify.mobile_app_android_设备名
-data:
-  message: ha_app_control
-  data:
-    type: media_play_pause
-```
-- media_next_track: 下一曲
-- media_previous_track: 上一曲
-- media_play_pause: 播放/暂停
-- media_pause: 暂停
-- media_play: 播放
-
-
-**TTS语音播放**
-```yaml
-service: notify.mobile_app_android_设备名
-data:
-  message: ha_app_control
-  data:
-    type: tts
-    data: 播报的文本内容
-```
-
 > **Android手机权限配置**【下面是我的小米手机需要的权限】
 
 - `省电策略`设置为`无限制`
@@ -115,18 +88,11 @@ data:
 - [x] 短信通知
     - 应用需开启`通知类短信`权限
 - [x] 来电通知
-- [x] 家庭传音
 - [x] NFC扫描
 - [x] 桌面小组件
     - 应用需开启`悬浮窗`权限
 - [x] 小米手环控制
     - 应用需开启`蓝牙`相关权限
-
-**运行轨迹**
-
-使用百度地图鹰眼轨迹服务，24小时监控设备位置
-
-https://lbsyun.baidu.com/trace/admin/service
 
 **应用下载**
 

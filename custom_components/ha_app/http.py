@@ -1,19 +1,12 @@
 import time
 import json
-import aiohttp
 import logging
-import datetime
 from homeassistant.components.http import HomeAssistantView
-from homeassistant.components.conversation.agent_manager import async_converse
-from homeassistant.util.json import load_json
 from homeassistant.helpers.network import get_url
-from homeassistant.const import __version__ as current_version
 
-from .manifest import manifest
-from .utils import call_service, async_http_post, async_register_sensor, \
-    get_storage_dir, timestamp_state, md5, get_notifications
+from .utils import call_service, async_http_post, async_register_sensor, timestamp_state, md5, get_notifications
+
 _LOGGER = logging.getLogger(__name__)
-
 
 class HttpView(HomeAssistantView):
 
@@ -22,23 +15,15 @@ class HttpView(HomeAssistantView):
     requires_auth = False
     # 计数器
     count = 0
-    # 设备名称
-    device = {}
-
-    def get_device(self, webhook_id):
-        ''' 获取设备信息 '''
-        if webhook_id not in self.device:
-            config_entries = load_json(get_storage_dir('core.config_entries'))
-            entries = config_entries['data']['entries']
-            for entity in entries:
-                entity_data = entity.get('data')
-                if entity_data is not None and entity_data.get('webhook_id') == webhook_id:
-                    self.device[webhook_id] = {
-                        'id': entity_data.get('device_id'),
-                        'latitude': 0,
-                        'longitude': 0
-                    }
-        return self.device.get(webhook_id)
+    
+    async def get(self, request):
+        query = request.query
+        ver = query.get('ver')
+        # 判断当前APP版本是否支持本插件
+        result = ''
+        if ver is not None and ver < '2.2':
+            result = '请将APP升级到最新版本'
+        return self.json_message(result, status_code=200)
 
     async def post(self, request):
         ''' 保留通知消息 '''
@@ -54,12 +39,10 @@ class HttpView(HomeAssistantView):
 
         registration_info = body.get('registration_info')
         webhook_id = registration_info.get('webhook_id')
-        device = self.get_device(webhook_id)
-        device_id = device.get("id")
 
         # 特殊情况
         if message == 'ha_app_control':
-            hass.bus.fire("ha_app_control", {"dev_id": device_id, **data})
+            hass.bus.fire("ha_app_control", {"webhook_id": webhook_id, **data})
             return self.json_message("触发成功", status_code=201)
 
         result = {
@@ -78,7 +61,7 @@ class HttpView(HomeAssistantView):
             if image is not None:
                 result['image'] = image
 
-        notification_id = f'{md5(device_id)}{time.strftime("%m%d%H%M%S", time.localtime())}{self.count}'
+        notification_id = f'{md5(webhook_id)}{time.strftime("%m%d%H%M%S", time.localtime())}{self.count}'
         self.count = self.count + 1
         if self.count > 50:
             self.count = 0
@@ -112,14 +95,10 @@ class HttpView(HomeAssistantView):
         _type = body.get('type')
         data = body.get('data')
 
-        device = self.get_device(webhook_id)
-        if device is None:
-            return self.json_message("设备未注册", status_code=204)
-
         if _type == 'gps':  # 位置
-            hass.loop.create_task(self.async_update_device(
-                hass, webhook_url, data, device))
-        elif _type == 'notify_list':  # 通知列表
+            hass.loop.create_task(
+                self.async_update_device(hass, webhook_url, data))
+        elif _type == 'notify':  # 通知列表
             for item in data:
                 await self.async_update_notify(hass, webhook_url, item)
         elif _type == 'sms':  # 短信
@@ -136,40 +115,11 @@ class HttpView(HomeAssistantView):
                 self.async_update_event(hass, webhook_url, data))
 
         # 使用新版通知
-        notifications = get_notifications(hass, device.get('id'))
-
+        notifications = get_notifications(hass, webhook_id)
         response = {
             'notify': notifications
         }
-        if _type == 'ha.agent':
-            # 对话代理
-            pipeline_data = hass.data['assist_pipeline']
-            storage_collection = pipeline_data.pipeline_store
-            # async_set_preferred_item(item_id)
-            response['data'] = {
-                "pipelines": storage_collection.async_items(),
-                "preferred_pipeline": storage_collection.async_get_preferred_item()
-            }
-        elif _type == 'conversation.process':
-            # 语音识别
-            result = await async_converse(
-                hass=hass,
-                text=data["text"],
-                conversation_id=data.get("conversation_id"),
-                context=self.context(request),
-                language=data.get("language"),
-                agent_id=data.get("agent_id", "homeassistant"),
-            )
-            response['data'] = result.as_dict()
-        elif _type == 'ha.config':
-            # 基本配置
-            response['data'] = {
-                'internal_url': get_url(hass),
-                'external_url': get_url(hass, prefer_external=True),
-                'ha_version': current_version,
-                'ha_app_version': manifest.version
-            }
-        elif _type == 'webhook':
+        if _type == 'webhook':
             # webhook
             response['data'] = await async_http_post(webhook_url, data)
         # print(response)
@@ -201,7 +151,7 @@ class HttpView(HomeAssistantView):
         if token is None:
             return self.json_message("未授权", status_code=401)
 
-    async def async_update_device(self, hass, webhook_url, body, device):
+    async def async_update_device(self, hass, webhook_url, body):
         ''' 更新设备 '''
         latitude = body.get('latitude')
         longitude = body.get('longitude')
@@ -219,17 +169,6 @@ class HttpView(HomeAssistantView):
         })
         if result is not None:
             await self.async_update_battery(hass, webhook_url, battery)
-            # 鹰眼轨迹服务
-            map = hass.data.get(manifest.domain)
-            if map is not None:
-                device_id = device.get('id')
-                if device.get('latitude') == latitude and device.get('longitude') == longitude:
-                    _LOGGER.debug('位置相同不上报，节省额度')
-                else:
-                    await map.async_add_point(device_id, latitude, longitude, gps_accuracy)
-                # 记录坐标
-                device['latitude'] = latitude
-                device['longitude'] = longitude
 
     async def async_update_battery(self, hass, webhook_url, battery):
         ''' 更新电量 '''
@@ -332,14 +271,19 @@ class HttpView(HomeAssistantView):
     async def async_update_event(self, hass, webhook_url, data):
         ''' 系统事件 '''
         battery = data.get('battery')
-        state = data.get('text')
+        text = data.get('text')
+        source = data.get('source')
 
         await async_register_sensor(webhook_url,
                                     unique_id="system_event",
                                     icon="mdi:cellphone-information",
-                                    state=state,
-                                    attributes={},
+                                    state=timestamp_state(hass),
+                                    attributes={
+                                        'text': text,
+                                        'source': source
+                                    },
                                     register_data={
+                                        "device_class": "timestamp",
                                         "name": "系统事件",
                                     }
                                     )

@@ -6,12 +6,9 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow
 from homeassistant.data_entry_flow import FlowResult
 
-from .manifest import manifest
+from .const import DOMAIN
 
-DATA_SCHEMA = vol.Schema({})
-DOMAIN = manifest.domain
-
-class SimpleConfigFlow(ConfigFlow, domain=DOMAIN):
+class AppConfigFlow(ConfigFlow, domain=DOMAIN):
 
     VERSION = 2
 
@@ -23,6 +20,6 @@ class SimpleConfigFlow(ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="single_instance_allowed")
 
         if user_input is None:
-            return self.async_show_form(step_id="user", data_schema=DATA_SCHEMA)
+            return self.async_show_form(step_id="user", data_schema=vol.Schema({}))
 
         return self.async_create_entry(title=DOMAIN, data={})
